@@ -101,7 +101,7 @@
   --z-toast: 1080;
   
   /* Mobile Navbar */
-  --mobile-navbar-height: 64px;
+  --mobile-navbar-height: calc(64px + env(safe-area-inset-top));
   --mobile-bottom-nav-height: 60px;
 }
 
@@ -242,7 +242,7 @@ strong, b { font-weight: 600; }
   flex: 1;
   position: relative;
   height: calc(100vh - var(--mobile-navbar-height));
-  padding-bottom: var(--mobile-bottom-nav-height);
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 1024px) {
@@ -263,7 +263,7 @@ strong, b { font-weight: 600; }
   position: relative;
   height: 100%;
   /* Critical fix: Ensure proper padding at bottom to prevent overlap with mobile nav */
-  padding-bottom: calc(var(--mobile-bottom-nav-height) + var(--spacing-6));
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + var(--spacing-6) + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 768px) {
@@ -508,6 +508,7 @@ strong, b { font-weight: 600; }
   z-index: var(--z-fixed);
   box-shadow: var(--shadow-lg);
   padding: 0 var(--spacing-2);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @media (min-width: 1024px) {
@@ -520,6 +521,10 @@ strong, b { font-weight: 600; }
   display: flex;
   justify-content: space-between;
   width: 100%;
+  gap: var(--spacing-2);
+  overflow-x: auto;
+  padding: 0 var(--spacing-1);
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-bottom-nav .nav-item {
@@ -530,7 +535,8 @@ strong, b { font-weight: 600; }
   text-align: center;
   height: 100%;
   border-radius: 0;
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 72px;
 }
 
 .mobile-bottom-nav .nav-item i {
@@ -540,24 +546,26 @@ strong, b { font-weight: 600; }
 }
 
 /* Floating Action Button */
+
 .fab-button {
   display: flex;
   position: fixed;
   right: var(--spacing-4);
-  bottom: calc(var(--mobile-bottom-nav-height) + var(--spacing-4));
+  bottom: calc(var(--mobile-bottom-nav-height) + var(--spacing-4) + env(safe-area-inset-bottom));
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background-color: var(--primary);
   color: white;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
-  z-index: var(--z-fixed);
+  z-index: calc(var(--z-fixed) + 1);
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
   transition: var(--transition);
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .fab-button:hover {
@@ -565,11 +573,45 @@ strong, b { font-weight: 600; }
   box-shadow: 0 8px 20px rgba(30, 64, 175, 0.5);
 }
 
+.fab-button.fab-pending {
+  background-color: var(--warning);
+}
+
+.fab-button.fab-pending:hover {
+  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.5);
+}
+
 @media (min-width: 1024px) {
   .fab-button {
     display: none;
   }
 }
+
+.fab-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: var(--danger);
+  color: #fff;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  transition: var(--transition-fast);
+  pointer-events: none;
+}
+
+.fab-badge.hidden {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
 
 /* Mobile Header Menu Button */
 .toggle-icon {
@@ -1384,6 +1426,20 @@ textarea.form-control {
 .table-sm thead th,
 .table-sm tbody td {
   padding: var(--spacing-2);
+}
+
+#pendingInspectionTable td {
+  white-space: nowrap;
+}
+
+#pendingInspectionTable .btn {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: 0.75rem;
+}
+
+#pendingInspectionTable .chip {
+  font-size: 0.75rem;
+  padding: var(--spacing-1) var(--spacing-2);
 }
 
 @media (min-width: 768px) {
@@ -3766,8 +3822,9 @@ textarea.form-control {
   </div>
 
   <!-- Botón FAB -->
-  <button class="fab-button" id="fabSave">
+  <button class="fab-button" id="fabAction" aria-label="Guardar inspección">
     <i class="fas fa-save"></i>
+    <span class="fab-badge hidden" id="fabBadge">0</span>
   </button>
 
   <!-- MODALES -->
@@ -4134,6 +4191,42 @@ function getWeekRange(isoWeek) {
   } catch (error) {
     console.error('Error calculating week range:', error);
     return 'Rango de fecha inválido';
+  }
+}
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function updateFabAppearance() {
+  const fabButton = document.getElementById('fabAction');
+  const icon = fabButton?.querySelector('i');
+  const badge = document.getElementById('fabBadge');
+  if (!fabButton || !icon || !badge) return;
+
+  if (isMobileView()) {
+    fabButton.classList.add('fab-pending');
+    fabButton.setAttribute('aria-label', 'Ver inspecciones pendientes');
+    icon.className = 'fas fa-clipboard-list';
+    const count = parseInt(badge.textContent || '0', 10) || 0;
+    badge.classList.toggle('hidden', count === 0);
+  } else {
+    fabButton.classList.remove('fab-pending');
+    fabButton.setAttribute('aria-label', 'Guardar inspección');
+    icon.className = 'fas fa-save';
+    badge.classList.add('hidden');
+  }
+}
+
+function updatePendingFabCount(count) {
+  const badge = document.getElementById('fabBadge');
+  if (!badge) return;
+
+  badge.textContent = Math.max(0, count || 0).toString();
+  if (isMobileView()) {
+    badge.classList.toggle('hidden', count === 0);
+  } else {
+    badge.classList.add('hidden');
   }
 }
 
@@ -5689,9 +5782,12 @@ async function refreshPendingInspections() {
   try {
     const pendingBuses = await getPendingBuses(null);
     pendingCount.textContent = pendingBuses.length.toString();
+    updatePendingFabCount(pendingBuses.length);
+    updateFabAppearance();
   } catch (error) {
     console.error('Error refreshing pending inspections:', error);
     pendingCount.textContent = '?';
+    updatePendingFabCount(0);
   }
 }
 
@@ -5720,6 +5816,8 @@ async function refreshPendingList() {
     const globalPendingCount = document.getElementById('pendingCount');
     if (globalPendingCount && !terminalFilter) {
       globalPendingCount.textContent = pendingBuses.length.toString();
+      updatePendingFabCount(pendingBuses.length);
+      updateFabAppearance();
     }
     
       if (pendingBuses.length > 0) {
@@ -5782,12 +5880,15 @@ async function refreshPendingList() {
     } else {
       pendingListElement.innerHTML = '<div class="chip chip-success" style="margin: 1rem 0; justify-content: center; width: 100%">¡No hay inspecciones pendientes! 🎉</div>';
     }
+    updateFabAppearance();
   } catch (error) {
     clearTimeout(loaderId);
     hideLoader();
     
     console.error('Error updating pending inspections list:', error);
     pendingListElement.innerHTML = '<div class="chip chip-danger" style="margin: 1rem 0">Error al cargar inspecciones pendientes</div>';
+    updatePendingFabCount(0);
+    updateFabAppearance();
   }
 }
 
@@ -8190,7 +8291,23 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 8. Save inspection
   document.getElementById('btnSave')?.addEventListener('click', saveInspection);
-  document.getElementById('fabSave')?.addEventListener('click', saveInspection);
+
+  const fabButton = document.getElementById('fabAction');
+  if (fabButton) {
+    fabButton.addEventListener('click', () => {
+      if (isMobileView()) {
+        const pendingModal = document.getElementById('pendingModal');
+        if (pendingModal) {
+          showModal(pendingModal);
+          refreshPendingList();
+        }
+      } else {
+        saveInspection();
+      }
+    });
+    updateFabAppearance();
+    window.addEventListener('resize', debounce(updateFabAppearance, 150));
+  }
   
   // 9. Handle ticket actions
   document.getElementById('btnUpdateTicket')?.addEventListener('click', () => {
