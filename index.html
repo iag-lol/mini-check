@@ -6213,16 +6213,24 @@ async function saveInspection() {
     const { data: inspData, error: inspError } = await supabase
       .from('revision_semanal_inspecciones')
       .upsert(inspectionPayload, { onConflict: 'bus_id,semana_iso' })
-      .select('id')
-      .maybeSingle();
+      .select('id');
     
-    if (inspError) throw inspError;
+    if (inspError) {
+      console.error('Error guardando inspección principal:', inspError);
+      throw inspError;
+    }
     
-    const inspectionId = inspData?.id;
+    const inspectionRecord = Array.isArray(inspData) ? inspData[0] : inspData;
+    const inspectionId = inspectionRecord?.id;
+    
+    if (!inspectionId) {
+      throw new Error('No se pudo obtener el ID de la inspección guardada');
+    }
+    
     APP_STATE.inspectionId = inspectionId;
     
     // 2. Save cameras section
-    await supabase
+    const { error: cameraError } = await supabase
       .from('revision_semanal_camara_inspeccion')
       .upsert({
         inspeccion_id: inspectionId,
@@ -6239,8 +6247,13 @@ async function saveInspection() {
         observacion: formInputs.cameraObservations ? formInputs.cameraObservations.value || null : null
       }, { onConflict: 'inspeccion_id' });
     
+    if (cameraError) {
+      console.error('Error guardando sección de cámaras:', cameraError);
+      throw cameraError;
+    }
+    
     // 3. Save TAG section
-    await supabase
+    const { error: tagError } = await supabase
       .from('revision_semanal_tag_inspeccion')
       .upsert({
         inspeccion_id: inspectionId,
@@ -6249,8 +6262,13 @@ async function saveInspection() {
         observacion: formInputs.tagObservations ? formInputs.tagObservations.value || null : null
       }, { onConflict: 'inspeccion_id' });
     
+    if (tagError) {
+      console.error('Error guardando sección de TAG:', tagError);
+      throw tagError;
+    }
+    
     // 4. Save extinguisher section
-    await supabase
+    const { error: extinguisherError } = await supabase
       .from('revision_semanal_extintor_inspeccion')
       .upsert({
         inspeccion_id: inspectionId,
@@ -6266,9 +6284,14 @@ async function saveInspection() {
         estado_porta_extintor: formInputs.holderStatus ? formInputs.holderStatus.value || null : null
       }, { onConflict: 'inspeccion_id' });
     
+    if (extinguisherError) {
+      console.error('Error guardando sección de extintor:', extinguisherError);
+      throw extinguisherError;
+    }
+    
     // 5. Save Mobileye section (if applicable)
     if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
-      await supabase
+      const { error: mobileyeError } = await supabase
         .from('revision_semanal_movileye_inspeccion')
         .upsert({
           inspeccion_id: inspectionId,
@@ -6285,10 +6308,15 @@ async function saveInspection() {
             new Date(formInputs.incidentDate.value).toISOString() : null,
           nro_siniestro: formInputs.incidentNumber ? formInputs.incidentNumber.value || null : null
         }, { onConflict: 'inspeccion_id' });
+      
+      if (mobileyeError) {
+        console.error('Error guardando sección de Mobileye:', mobileyeError);
+        throw mobileyeError;
+      }
     }
     
     // 6. Save odometer section
-    await supabase
+    const { error: odometerError } = await supabase
       .from('revision_semanal_odometro_inspeccion')
       .upsert({
         inspeccion_id: inspectionId,
@@ -6297,6 +6325,11 @@ async function saveInspection() {
         estado_odometro: formInputs.odometerStatus ? formInputs.odometerStatus.value : 'funcionando',
         observacion: formInputs.odometerObservations ? formInputs.odometerObservations.value || null : null
       }, { onConflict: 'inspeccion_id' });
+    
+    if (odometerError) {
+      console.error('Error guardando sección de odómetro:', odometerError);
+      throw odometerError;
+    }
     
     // 7. Generate maintenance tickets
     const createdTickets = await createMaintenanceTickets(inspectionId) || [];
@@ -6345,8 +6378,12 @@ async function saveInspection() {
     console.error('Error saving inspection:', error);
     if (formInputs.saveMsg) formInputs.saveMsg.innerHTML = '¡Error al guardar! <i class="fas fa-times-circle text-danger"></i>';
     
-    showNotification('error', 'Error de Guardado', 'No se pudieron guardar los datos de la inspección');
-    showLiveAlert('No se pudo guardar la inspección', 'danger');
+    const saveErrorMessage = error?.message ?
+      `No se pudieron guardar los datos: ${error.message}` :
+      'No se pudieron guardar los datos de la inspección';
+    
+    showNotification('error', 'Error de Guardado', saveErrorMessage);
+    showLiveAlert(saveErrorMessage, 'danger');
     return false;
   }
 }
