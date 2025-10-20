@@ -4901,32 +4901,73 @@ function setCurrentSessionFromRecord(record) {
   });
 }
 
+async function closeDuplicateSessionLogs(inspector, terminal, excludeId = null) {
+  if (!supabase) return;
+  
+  const normalizedInspector = normalizeInspectorName(inspector);
+  const normalizedTerminalLower = terminal.trim().toLowerCase();
+  
+  try {
+    const { data, error } = await supabase
+      .from('revision_semanal_ingresos')
+      .select('id, inspector, terminal')
+      .ilike('inspector', normalizedInspector)
+      .is('ended_at', null);
+    
+    if (error) throw error;
+    
+    const duplicates = (data || []).filter(row => {
+      if (!row) return false;
+      if (excludeId && row.id === excludeId) return false;
+      const rowInspector = normalizeInspectorName(row.inspector || '');
+      const rowTerminal = (row.terminal || '').trim().toLowerCase();
+      return rowInspector === normalizedInspector && rowTerminal === normalizedTerminalLower;
+    });
+    
+    if (duplicates.length === 0) return;
+    
+    const duplicateIds = duplicates.map(row => row.id);
+    await supabase
+      .from('revision_semanal_ingresos')
+      .update({ ended_at: new Date().toISOString() })
+      .in('id', duplicateIds);
+  } catch (error) {
+    console.error('Error closing duplicate session logs:', error);
+  }
+}
+
 
 async function createSessionLog(inspector, terminal, options = {}) {
   if (!supabase || !inspector || !terminal) return null;
   if (APP_STATE.sessionLoggingDisabled) return null;
   
   const normalizedInspector = normalizeInspectorName(inspector);
+  const cleanTerminal = terminal.trim();
+  const normalizedTerminalLower = cleanTerminal.toLowerCase();
   
   try {
     if (options.reuseExisting !== false) {
       const { data: existingRows, error: existingError } = await supabase
         .from('revision_semanal_ingresos')
         .select('id, inspector, terminal, started_at, ended_at, bus_count, ticket_count, buses')
-        .eq('terminal', terminal)
+        .ilike('inspector', normalizedInspector)
         .is('ended_at', null)
         .order('started_at', { ascending: false });
       
       if (existingError) throw existingError;
       
-      const existingLog = (existingRows || []).find(row => normalizeInspectorName(row.inspector) === normalizedInspector);
+      const existingLog = (existingRows || []).find(row => {
+        const rowTerminal = (row.terminal || '').trim().toLowerCase();
+        return normalizeInspectorName(row.inspector) === normalizedInspector && rowTerminal === normalizedTerminalLower;
+      });
       if (existingLog) {
         storeSessionLogMetadata({
           id: existingLog.id,
           inspector: normalizedInspector,
-          terminal,
+          terminal: cleanTerminal,
           startedAt: existingLog.started_at || new Date().toISOString()
         });
+        await closeDuplicateSessionLogs(normalizedInspector, cleanTerminal, existingLog.id);
         return existingLog;
       }
     }
@@ -4937,7 +4978,7 @@ async function createSessionLog(inspector, terminal, options = {}) {
       .from('revision_semanal_ingresos')
       .insert({
         inspector: normalizedInspector,
-        terminal,
+        terminal: cleanTerminal,
         started_at: startedAt,
         ended_at: null,
         bus_count: 0,
@@ -4953,9 +4994,10 @@ async function createSessionLog(inspector, terminal, options = {}) {
       storeSessionLogMetadata({
         id: data.id,
         inspector: normalizedInspector,
-        terminal,
+        terminal: cleanTerminal,
         startedAt: data.started_at || startedAt
       });
+      await closeDuplicateSessionLogs(normalizedInspector, cleanTerminal, data.id);
     }
     
     return data || null;
@@ -5067,7 +5109,9 @@ async function ensureActiveSessionLog() {
         .maybeSingle();
       
       if (!storedError && storedLog && !storedLog.ended_at && normalizeInspectorName(storedLog.inspector) === normalizedInspector) {
+        resetSessionLogState();
         setCurrentSessionFromRecord(storedLog);
+        await closeDuplicateSessionLogs(normalizedInspector, normalizedTerminal, storedLog.id);
         return;
       }
     } catch (error) {
