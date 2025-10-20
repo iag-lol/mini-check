@@ -4468,6 +4468,7 @@ const APP_CONFIG = {
     session: 'bus_inspection_session',
     recentActivity: 'bus_inspection_activity',
     lastSection: 'bus_inspection_last_section',
+    sessionLog: 'bus_inspection_session_log',
     preferences: 'bus_inspection_preferences'
   },
   terminals: ['El Roble', 'La Reina', 'Maria Angelica', 'El Descanso'],
@@ -4601,6 +4602,24 @@ function getWeekRange(isoWeek) {
     console.error('Error calculating week range:', error);
     return 'Rango de fecha inválido';
   }
+}
+
+/**
+ * Normalizes inspector names to a consistent Title Case format
+ * @param {string} name - Raw inspector name input
+ * @returns {string} Normalized inspector name
+ */
+function normalizeInspectorName(name) {
+  if (!name) return '';
+  return name
+    .toString()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function isMobileView() {
@@ -4822,26 +4841,123 @@ function resetSessionLogState() {
   };
 }
 
+function getStoredSessionLogMetadata() {
+  try {
+    const raw = localStorage.getItem(APP_CONFIG.storageKeys.sessionLog);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Error parsing stored session log metadata:', error);
+    return null;
+  }
+}
 
-async function createSessionLog(inspector, terminal) {
+function storeSessionLogMetadata(metadata) {
+  if (!metadata || !metadata.id) return;
+  try {
+    localStorage.setItem(APP_CONFIG.storageKeys.sessionLog, JSON.stringify(metadata));
+  } catch (error) {
+    console.error('Error storing session log metadata:', error);
+  }
+}
+
+function clearStoredSessionLogMetadata() {
+  localStorage.removeItem(APP_CONFIG.storageKeys.sessionLog);
+}
+
+function setCurrentSessionFromRecord(record) {
+  if (!record) return;
+  
+  APP_STATE.currentSession.logId = record.id;
+  
+  const startedAt = record.started_at || new Date().toISOString();
+  APP_STATE.currentSession.startedAt = startedAt;
+  
+  let buses = [];
+  if (Array.isArray(record.buses)) {
+    buses = record.buses;
+  } else if (typeof record.buses === 'string' && record.buses.trim() !== '') {
+    try {
+      buses = JSON.parse(record.buses) || [];
+    } catch (error) {
+      buses = [];
+    }
+  }
+  
+  APP_STATE.currentSession.buses = buses;
+  APP_STATE.currentSession.ticketCount = typeof record.ticket_count === 'number'
+    ? record.ticket_count
+    : buses.reduce((sum, bus) => {
+        if (!bus) return sum;
+        const tickets = Array.isArray(bus.tickets) ? bus.tickets.length : 0;
+        return sum + tickets;
+      }, 0);
+  
+  storeSessionLogMetadata({
+    id: record.id,
+    inspector: APP_STATE.session.inspector,
+    terminal: APP_STATE.session.terminal,
+    startedAt
+  });
+}
+
+
+async function createSessionLog(inspector, terminal, options = {}) {
   if (!supabase || !inspector || !terminal) return null;
   if (APP_STATE.sessionLoggingDisabled) return null;
+  
+  const normalizedInspector = normalizeInspectorName(inspector);
+  
   try {
+    if (options.reuseExisting !== false) {
+      const { data: existingRows, error: existingError } = await supabase
+        .from('revision_semanal_ingresos')
+        .select('id, inspector, terminal, started_at, ended_at, bus_count, ticket_count, buses')
+        .eq('terminal', terminal)
+        .is('ended_at', null)
+        .order('started_at', { ascending: false });
+      
+      if (existingError) throw existingError;
+      
+      const existingLog = (existingRows || []).find(row => normalizeInspectorName(row.inspector) === normalizedInspector);
+      if (existingLog) {
+        storeSessionLogMetadata({
+          id: existingLog.id,
+          inspector: normalizedInspector,
+          terminal,
+          startedAt: existingLog.started_at || new Date().toISOString()
+        });
+        return existingLog;
+      }
+    }
+    
+    const startedAt = new Date().toISOString();
+    
     const { data, error } = await supabase
       .from('revision_semanal_ingresos')
       .insert({
-        inspector,
+        inspector: normalizedInspector,
         terminal,
-        started_at: new Date().toISOString(),
+        started_at: startedAt,
         ended_at: null,
         bus_count: 0,
         ticket_count: 0,
         buses: []
       })
-      .select('id, started_at')
+      .select('id, inspector, terminal, started_at, ended_at, bus_count, ticket_count, buses')
       .maybeSingle();
     
     if (error) throw error;
+    
+    if (data) {
+      storeSessionLogMetadata({
+        id: data.id,
+        inspector: normalizedInspector,
+        terminal,
+        startedAt: data.started_at || startedAt
+      });
+    }
+    
     return data || null;
   } catch (error) {
     console.error('Error creating session log:', error);
@@ -4882,6 +4998,7 @@ async function updateSessionLogStats() {
 async function finalizeSessionLog() {
   const { currentSession } = APP_STATE;
   if (!supabase || !currentSession || !currentSession.logId || APP_STATE.sessionLoggingDisabled) {
+    clearStoredSessionLogMetadata();
     resetSessionLogState();
     return;
   }
@@ -4899,6 +5016,7 @@ async function finalizeSessionLog() {
   } catch (error) {
     console.error('Error finalizing session log:', error);
   } finally {
+    clearStoredSessionLogMetadata();
     resetSessionLogState();
   }
 }
@@ -4936,11 +5054,33 @@ async function ensureActiveSessionLog() {
   if (APP_STATE.sessionLoggingDisabled) return;
   if (APP_STATE.currentSession && APP_STATE.currentSession.logId) return;
   
+  const normalizedInspector = normalizeInspectorName(APP_STATE.session.inspector);
+  const normalizedTerminal = APP_STATE.session.terminal.trim();
+  
+  const storedMetadata = getStoredSessionLogMetadata();
+  if (storedMetadata && storedMetadata.id) {
+    try {
+      const { data: storedLog, error: storedError } = await supabase
+        .from('revision_semanal_ingresos')
+        .select('id, inspector, terminal, started_at, ended_at, bus_count, ticket_count, buses')
+        .eq('id', storedMetadata.id)
+        .maybeSingle();
+      
+      if (!storedError && storedLog && !storedLog.ended_at && normalizeInspectorName(storedLog.inspector) === normalizedInspector) {
+        setCurrentSessionFromRecord(storedLog);
+        return;
+      }
+    } catch (error) {
+      console.error('Error restoring stored session log:', error);
+    }
+    
+    clearStoredSessionLogMetadata();
+  }
+  
   resetSessionLogState();
-  const sessionLog = await createSessionLog(APP_STATE.session.inspector, APP_STATE.session.terminal);
+  const sessionLog = await createSessionLog(normalizedInspector, normalizedTerminal);
   if (sessionLog) {
-    APP_STATE.currentSession.logId = sessionLog.id;
-    APP_STATE.currentSession.startedAt = sessionLog.started_at || new Date().toISOString();
+    setCurrentSessionFromRecord(sessionLog);
   }
 }
 
@@ -5349,27 +5489,30 @@ async function startSession(name, terminal) {
     await finalizeSessionLog();
     resetSessionLogState();
     
+    const normalizedName = normalizeInspectorName(name);
+    const normalizedTerminal = terminal.trim();
+    
     // Update application state
-    APP_STATE.session.inspector = name;
-    APP_STATE.session.terminal = terminal;
+    APP_STATE.session.inspector = normalizedName;
+    APP_STATE.session.terminal = normalizedTerminal;
     
     // Update UI
     const userInfo = document.getElementById('userInfo');
     if (userInfo) {
-      userInfo.textContent = `${name} · ${terminal}`;
+      userInfo.textContent = `${normalizedName} · ${normalizedTerminal}`;
     }
     
     // Save to localStorage
     localStorage.setItem(APP_CONFIG.storageKeys.session, JSON.stringify({
-      inspector: name,
-      terminal: terminal
+      inspector: normalizedName,
+      terminal: normalizedTerminal
     }));
     
     // Log activity
     logActivity({
       type: 'login',
-      inspector: name,
-      terminal: terminal
+      inspector: normalizedName,
+      terminal: normalizedTerminal
     });
     
     // Hide login modal
@@ -5383,10 +5526,9 @@ async function startSession(name, terminal) {
     refreshReportTables();
     loadRecentActivity();
     
-    const sessionLog = await createSessionLog(name, terminal);
+    const sessionLog = await createSessionLog(normalizedName, normalizedTerminal);
     if (sessionLog) {
-      APP_STATE.currentSession.logId = sessionLog.id;
-      APP_STATE.currentSession.startedAt = sessionLog.started_at || new Date().toISOString();
+      setCurrentSessionFromRecord(sessionLog);
     }
     refreshSessionReport(APP_STATE.filters.sessions || {});
     
@@ -7136,14 +7278,17 @@ async function refreshSessionReport(filters = {}) {
       
       items.forEach((row) => {
         // Ensure the report shows a single session per inspector/terminal/hour slot
-        const inspector = (row?.inspector || '').trim();
+        const inspector = normalizeInspectorName(row?.inspector || '');
         const terminal = (row?.terminal || '').trim();
         const startedAt = row?.started_at ? new Date(row.started_at) : null;
         
         if (!inspector || !startedAt || Number.isNaN(startedAt.getTime())) {
+          if (inspector && row) row.inspector = inspector;
           result.push(row);
           return;
         }
+        
+        if (row) row.inspector = inspector;
         
         const key = [
           inspector.toLowerCase(),
@@ -7167,7 +7312,11 @@ async function refreshSessionReport(filters = {}) {
     const sessionsDeduped = deduplicateSessionsByInspectorHour(sessions);
     APP_STATE.sessionReportRows = sessionsDeduped;
     
-    const uniqueInspectors = new Set(sessionsDeduped.map(row => (row.inspector || '').trim()).filter(Boolean));
+    const uniqueInspectors = new Set(
+      sessionsDeduped
+        .map(row => normalizeInspectorName(row.inspector || ''))
+        .filter(Boolean)
+    );
     const totalBuses = sessionsDeduped.reduce((sum, row) => sum + (Number(row.bus_count) || 0), 0);
     const totalTickets = sessionsDeduped.reduce((sum, row) => sum + (Number(row.ticket_count) || 0), 0);
     
@@ -9274,14 +9423,22 @@ function initializeApp() {
     if (savedSession) {
       try {
         const session = JSON.parse(savedSession);
-        APP_STATE.session.inspector = session.inspector;
-        APP_STATE.session.terminal = session.terminal;
+        const normalizedInspector = normalizeInspectorName(session.inspector);
+        const normalizedTerminal = (session.terminal || '').trim();
+        APP_STATE.session.inspector = normalizedInspector;
+        APP_STATE.session.terminal = normalizedTerminal;
         
         // Update UI
         const userInfo = document.getElementById('userInfo');
         if (userInfo) {
-          userInfo.textContent = `${session.inspector} · ${session.terminal}`;
+          userInfo.textContent = `${normalizedInspector} · ${normalizedTerminal}`;
         }
+        
+        // Persist normalized values
+        localStorage.setItem(APP_CONFIG.storageKeys.session, JSON.stringify({
+          inspector: normalizedInspector,
+          terminal: normalizedTerminal
+        }));
         
         // Load initial data
         refreshPendingInspections();
