@@ -2514,6 +2514,11 @@ textarea.form-control {
             <i class="fas fa-ticket-alt"></i>
             <span>Tickets de Mantenimiento</span>
           </div>
+          <div class="nav-item" data-section="session-report">
+            <i class="fas fa-user-clock"></i>
+            <span>Ingresos</span>
+            <span class="badge badge-light" id="sessionCount">0</span>
+          </div>
           <div class="nav-item" data-section="fleet-status">
             <i class="fas fa-bus"></i>
             <span>Estado de Flota</span>
@@ -3727,6 +3732,105 @@ textarea.form-control {
           </div>
         </section>
         
+        <!-- INFORME DE INGRESOS -->
+        <section id="section-session-report" class="hidden">
+          <div class="card scaleIn">
+            <div class="card-header flex-wrap">
+              <h3 class="card-title">Ingresos a la Aplicación</h3>
+              <div class="d-flex align-center gap-3 flex-wrap">
+                <select id="sessionTerminalFilter" class="form-control">
+                  <option value="">Todos los terminales</option>
+                  <option>El Roble</option>
+                  <option>La Reina</option>
+                  <option>Maria Angelica</option>
+                  <option>El Descanso</option>
+                </select>
+                <input type="date" class="form-control" id="sessionDateFrom" title="Desde">
+                <input type="date" class="form-control" id="sessionDateTo" title="Hasta">
+                <button class="btn btn-primary btn-sm" id="btnApplySessionFilters">
+                  <i class="fas fa-filter"></i> Aplicar
+                </button>
+                <button class="btn btn-light btn-sm" id="btnResetSessionFilters">
+                  <i class="fas fa-redo"></i> Restablecer
+                </button>
+              </div>
+            </div>
+            
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                  </div>
+                </div>
+                <div class="stat-label">Inspectores Activos</div>
+                <div class="stat-value" id="activeInspectorCount">0</div>
+                <div class="stat-footer">
+                  <span>Últimas 24h</span>
+                </div>
+              </div>
+              
+              <div class="stat-card success">
+                <div class="stat-card-header">
+                  <div class="stat-icon success">
+                    <i class="fas fa-bus"></i>
+                  </div>
+                </div>
+                <div class="stat-label">Buses Revisados</div>
+                <div class="stat-value" id="sessionBusTotal">0</div>
+                <div class="stat-footer">
+                  <span>Con registros de las sesiones</span>
+                </div>
+              </div>
+              
+              <div class="stat-card warning">
+                <div class="stat-card-header">
+                  <div class="stat-icon warning">
+                    <i class="fas fa-ticket-alt"></i>
+                  </div>
+                </div>
+                <div class="stat-label">Tickets Generados</div>
+                <div class="stat-value" id="sessionTicketTotal">0</div>
+                <div class="stat-footer">
+                  <span>Derivados de hallazgos</span>
+                </div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                  </div>
+                </div>
+                <div class="stat-label">Evaluación Promedio</div>
+                <div class="stat-value" id="sessionAverageScore">—</div>
+                <div class="stat-footer">
+                  <span id="sessionEvaluationNote">Sin datos</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-container mt-4">
+              <table class="table" id="sessionTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Inspector</th>
+                    <th>Terminal</th>
+                    <th>Inicio</th>
+                    <th>Cierre</th>
+                    <th>Buses Revisados</th>
+                    <th>Tickets</th>
+                    <th>Evaluación</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- ESTADO DE FLOTA -->
         <section id="section-fleet-status" class="hidden">
           <div class="card scaleIn">
@@ -4056,6 +4160,10 @@ textarea.form-control {
         <i class="fas fa-fire-extinguisher"></i>
         <span>Extintores</span>
       </div>
+      <div class="nav-item" data-section="session-report">
+        <i class="fas fa-user-clock"></i>
+        <span>Ingresos</span>
+      </div>
       <div class="nav-item" data-section="fleet-status">
         <i class="fas fa-bus"></i>
         <span>Flota</span>
@@ -4221,6 +4329,57 @@ textarea.form-control {
     </div>
   </div>
 
+  <!-- Modal de Detalle de Sesión -->
+  <div class="modal" id="sessionDetailModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Detalle de Desempeño</h4>
+          <button class="modal-close" id="sessionDetailClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex flex-column gap-3 mb-4">
+            <div class="chip chip-primary" id="sessionDetailInspector">
+              <i class="fas fa-user-check"></i>
+              <span>—</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="chip" id="sessionDetailTerminal"><i class="fas fa-map-marker-alt"></i> —</span>
+              <span class="chip" id="sessionDetailRange"><i class="fas fa-clock"></i> —</span>
+              <span class="chip chip-success" id="sessionDetailBuses"><i class="fas fa-bus"></i> 0 buses</span>
+              <span class="chip chip-warning" id="sessionDetailTickets"><i class="fas fa-ticket-alt"></i> 0 tickets</span>
+            </div>
+            <p class="text-info" id="sessionDetailEvaluation">Evaluación pendiente.</p>
+          </div>
+          
+          <div class="table-container">
+            <table class="table table-sm" id="sessionDetailTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>PPU</th>
+                  <th>Terminal</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Tickets</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          
+          <div class="mt-4">
+            <h5>Hallazgos que generaron tickets</h5>
+            <ul id="sessionDetailFindings" class="mt-2" style="padding-left: 1.25rem;"></ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" id="sessionDetailDismiss">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal de Nuevo Ticket -->
   <div class="modal" id="newTicketModal">
     <div class="modal-dialog">
@@ -4331,6 +4490,7 @@ const APP_STATE = {
     cameras: {},
     tag: {},
     extinguishers: {},
+    sessions: {},
     mobileye: {},
     odometer: {},
     tickets: {},
@@ -4338,6 +4498,14 @@ const APP_STATE = {
   },
   pendingRequests: 0,
   charts: {},
+  currentSession: {
+    logId: null,
+    startedAt: null,
+    buses: [],
+    ticketCount: 0
+  },
+  sessionLoggingDisabled: false,
+  sessionReportRows: [],
   initialized: false
 };
 
@@ -4645,6 +4813,206 @@ function showLiveAlert(message, type = 'success') {
 }
 
 
+function resetSessionLogState() {
+  APP_STATE.currentSession = {
+    logId: null,
+    startedAt: null,
+    buses: [],
+    ticketCount: 0
+  };
+}
+
+
+async function createSessionLog(inspector, terminal) {
+  if (!supabase || !inspector || !terminal) return null;
+  if (APP_STATE.sessionLoggingDisabled) return null;
+  try {
+    const { data, error } = await supabase
+      .from('revision_semanal_ingresos')
+      .insert({
+        inspector,
+        terminal,
+        started_at: new Date().toISOString(),
+        ended_at: null,
+        bus_count: 0,
+        ticket_count: 0,
+        buses: []
+      })
+      .select('id, started_at')
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data || null;
+  } catch (error) {
+    console.error('Error creating session log:', error);
+    if (error?.code === '42501') {
+      APP_STATE.sessionLoggingDisabled = true;
+      showNotification(
+        'warning',
+        'Registro de Ingreso',
+        'El usuario actual no tiene permisos para insertar en "revision_semanal_ingresos". Se deshabilita temporalmente el registro de ingresos hasta configurar las políticas RLS.'
+      );
+    } else {
+      showNotification('warning', 'Registro de Ingreso', 'No se pudo registrar el ingreso en la base de datos.');
+    }
+    return null;
+  }
+}
+
+
+async function updateSessionLogStats() {
+  const { currentSession } = APP_STATE;
+  if (!supabase || !currentSession || !currentSession.logId || APP_STATE.sessionLoggingDisabled) return;
+  
+  try {
+    await supabase
+      .from('revision_semanal_ingresos')
+      .update({
+        bus_count: currentSession.buses.length,
+        ticket_count: currentSession.ticketCount,
+        buses: currentSession.buses
+      })
+      .eq('id', currentSession.logId);
+  } catch (error) {
+    console.error('Error updating session log stats:', error);
+  }
+}
+
+
+async function finalizeSessionLog() {
+  const { currentSession } = APP_STATE;
+  if (!supabase || !currentSession || !currentSession.logId || APP_STATE.sessionLoggingDisabled) {
+    resetSessionLogState();
+    return;
+  }
+  
+  try {
+    await supabase
+      .from('revision_semanal_ingresos')
+      .update({
+        ended_at: new Date().toISOString(),
+        bus_count: currentSession.buses.length,
+        ticket_count: currentSession.ticketCount,
+        buses: currentSession.buses
+      })
+      .eq('id', currentSession.logId);
+  } catch (error) {
+    console.error('Error finalizing session log:', error);
+  } finally {
+    resetSessionLogState();
+  }
+}
+
+
+async function recordSessionActivity(inspectionId, ticketsCreated = [], status = 'OK') {
+  if (!APP_STATE.currentBus || !APP_STATE.session.inspector || APP_STATE.sessionLoggingDisabled) return;
+  await ensureActiveSessionLog();
+  if (!APP_STATE.currentSession.logId) return;
+  
+  const busEntry = {
+    inspection_id: inspectionId,
+    bus_ppu: APP_STATE.currentBus.ppu || '',
+    terminal: APP_STATE.currentBus.terminal || APP_STATE.session.terminal || '',
+    fecha: new Date().toISOString(),
+    estado: status || 'OK',
+    tickets: (ticketsCreated || []).map(ticket => ({
+      id: ticket?.id || null,
+      componente: ticket?.componente || '—',
+      descripcion: ticket?.descripcion_falla || ticket?.descripcion || '—'
+    }))
+  };
+  
+  APP_STATE.currentSession.buses.push(busEntry);
+  APP_STATE.currentSession.ticketCount += busEntry.tickets.length;
+  
+  if (APP_STATE.currentSession.logId) {
+    await updateSessionLogStats();
+  }
+}
+
+
+async function ensureActiveSessionLog() {
+  if (!APP_STATE.session.inspector || !APP_STATE.session.terminal) return;
+  if (APP_STATE.sessionLoggingDisabled) return;
+  if (APP_STATE.currentSession && APP_STATE.currentSession.logId) return;
+  
+  resetSessionLogState();
+  const sessionLog = await createSessionLog(APP_STATE.session.inspector, APP_STATE.session.terminal);
+  if (sessionLog) {
+    APP_STATE.currentSession.logId = sessionLog.id;
+    APP_STATE.currentSession.startedAt = sessionLog.started_at || new Date().toISOString();
+  }
+}
+
+
+function formatDateTime(value, includeTime = true) {
+  if (!value) return '—';
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('es-CL', includeTime ? { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' } : { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch (error) {
+    return '—';
+  }
+}
+
+
+function getSessionEvaluation(row) {
+  const busCount = Number(row?.bus_count) || 0;
+  const ticketCount = Number(row?.ticket_count) || 0;
+  
+  if (busCount <= 0) {
+    return {
+      label: 'Sin actividad',
+      className: 'text-info fw-medium',
+      note: 'No se registraron buses durante la sesión.',
+      score: '—',
+      ratio: 0
+    };
+  }
+  
+  const ratio = ticketCount / busCount;
+  
+  if (ratio <= 0.1) {
+    return {
+      label: 'Sobresaliente',
+      className: 'text-success fw-bold',
+      note: 'Excelente control preventivo; mínimos hallazgos derivados en tickets.',
+      score: 'A',
+      ratio
+    };
+  }
+  
+  if (ratio <= 0.25) {
+    return {
+      label: 'Bueno',
+      className: 'text-primary fw-bold',
+      note: 'Buen desempeño; continuar reforzando la revisión preventiva.',
+      score: 'B',
+      ratio
+    };
+  }
+  
+  if (ratio <= 0.5) {
+    return {
+      label: 'Atención',
+      className: 'text-warning fw-bold',
+      note: 'Se detectan hallazgos relevantes. Recomendar coaching y seguimiento puntual.',
+      score: 'C',
+      ratio
+    };
+  }
+  
+  return {
+    label: 'Crítico',
+    className: 'text-danger fw-bold',
+    note: 'Exceso de hallazgos con derivación a tickets. Revisar procedimientos y apoyo en terreno.',
+    score: 'D',
+    ratio
+  };
+}
+
+
 function escapeHTML(unsafe) {
   if (unsafe === null || unsafe === undefined) return '';
   const value = typeof unsafe === 'string' ? unsafe : String(unsafe);
@@ -4769,6 +5137,7 @@ function showSection(sectionId) {
     'mobileye-report': document.getElementById('section-mobileye-report'),
     'odometer-report': document.getElementById('section-odometer-report'),
     'maintenance-tickets': document.getElementById('section-maintenance-tickets'),
+    'session-report': document.getElementById('section-session-report'),
     'fleet-status': document.getElementById('section-fleet-status'),
     'user-settings': document.getElementById('section-user-settings'),
     'help': document.getElementById('section-help')
@@ -4844,6 +5213,9 @@ function loadSectionData(sectionId) {
       break;
     case 'extinguisher-report':
       refreshExtinguisherReport();
+      break;
+    case 'session-report':
+      refreshSessionReport();
       break;
     case 'mobileye-report':
       refreshMobileyeReport();
@@ -4967,13 +5339,16 @@ function openLoginModal() {
  * @param {string} name - Inspector name
  * @param {string} terminal - Terminal name
  */
-function startSession(name, terminal) {
+async function startSession(name, terminal) {
   if (!name || !terminal) {
     showNotification('error', 'Datos Incompletos', 'Por favor, complete tanto el nombre como el terminal');
     return false;
   }
   
   try {
+    await finalizeSessionLog();
+    resetSessionLogState();
+    
     // Update application state
     APP_STATE.session.inspector = name;
     APP_STATE.session.terminal = terminal;
@@ -5008,6 +5383,13 @@ function startSession(name, terminal) {
     refreshReportTables();
     loadRecentActivity();
     
+    const sessionLog = await createSessionLog(name, terminal);
+    if (sessionLog) {
+      APP_STATE.currentSession.logId = sessionLog.id;
+      APP_STATE.currentSession.startedAt = sessionLog.started_at || new Date().toISOString();
+    }
+    refreshSessionReport(APP_STATE.filters.sessions || {});
+    
     showNotification('success', 'Sesión Iniciada', 'Has iniciado sesión y puedes comenzar las inspecciones');
     return true;
   } catch (error) {
@@ -5020,7 +5402,7 @@ function startSession(name, terminal) {
 /**
  * Handles user logout
  */
-function handleLogout() {
+async function handleLogout() {
   // Show confirmation dialog
   if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
     try {
@@ -5032,6 +5414,8 @@ function handleLogout() {
           terminal: APP_STATE.session.terminal
         });
       }
+      
+      await finalizeSessionLog();
       
       // Clear session state
       APP_STATE.session.inspector = "";
@@ -5048,6 +5432,7 @@ function handleLogout() {
       }
       
       showNotification('info', 'Sesión Cerrada', 'Has cerrado sesión correctamente');
+      refreshSessionReport(APP_STATE.filters.sessions || {});
       
       // Show login modal
       openLoginModal();
@@ -5914,7 +6299,7 @@ async function saveInspection() {
       }, { onConflict: 'inspeccion_id' });
     
     // 7. Generate maintenance tickets
-    await createMaintenanceTickets(inspectionId);
+    const createdTickets = await createMaintenanceTickets(inspectionId) || [];
     
     clearTimeout(loaderId);
     hideLoader();
@@ -5938,6 +6323,11 @@ async function saveInspection() {
     // Update related data
     refreshPendingInspections();
     refreshReportTables();
+    await recordSessionActivity(
+      inspectionId,
+      createdTickets,
+      formInputs.globalStatus ? formInputs.globalStatus.value : 'OK'
+    );
     
     // Log activity
     logActivity({
@@ -5967,9 +6357,11 @@ async function saveInspection() {
  */
 async function createMaintenanceTickets(inspectionId) {
   if (!inspectionId || !APP_STATE.currentBus) return;
+  if (!supabase) return [];
   
   const formInputs = getFormInputs();
   const tickets = [];
+  const createdTicketRecords = [];
   
   // 1. Check for camera issues
   const cameraIssues = [];
@@ -6122,7 +6514,7 @@ async function createMaintenanceTickets(inspectionId) {
   // Create tickets in database
   for (const ticket of tickets) {
     try {
-      await supabase
+      const { data: insertedTicket, error: insertError } = await supabase
         .from('revision_semanal_tickets_mantencion')
         .insert({
           inspeccion_id: inspectionId,
@@ -6135,7 +6527,20 @@ async function createMaintenanceTickets(inspectionId) {
           estado: 'open',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        })
+        .select()
+        .maybeSingle();
+      
+      if (insertError) throw insertError;
+      if (insertedTicket) {
+        createdTicketRecords.push(insertedTicket);
+      } else {
+        createdTicketRecords.push({
+          componente: ticket.component,
+          descripcion_falla: ticket.description,
+          terminal: APP_STATE.currentBus.terminal || APP_STATE.session.terminal
         });
+      }
     } catch (error) {
       console.error('Error creating ticket:', error);
     }
@@ -6148,6 +6553,8 @@ async function createMaintenanceTickets(inspectionId) {
       `Se han creado automáticamente ${tickets.length} ticket${tickets.length !== 1 ? 's' : ''} de mantenimiento`
     );
   }
+
+  return createdTicketRecords;
 }
 
 // ===================== PENDING INSPECTIONS =====================
@@ -6318,6 +6725,7 @@ async function refreshReportTables() {
       refreshCamerasReport(),
       refreshTagReport(),
       refreshExtinguisherReport(),
+      refreshSessionReport(),
       refreshMobileyeReport(),
       refreshOdometerReport()
     ]);
@@ -6652,6 +7060,241 @@ async function refreshExtinguisherReport(filters = {}) {
       extinguisherTableBody.innerHTML = `<tr><td colspan="11" class="text-center text-danger">${escapeHTML(errorMessage)}</td></tr>`;
     }
   }
+}
+
+/**
+ * Refreshes the session ingress report
+ * @param {Object} filters - Filter criteria
+ */
+async function refreshSessionReport(filters = {}) {
+  if (!supabase) return;
+  const loaderId = showLoader('Cargando ingresos del personal...');
+  
+  try {
+    let sessionQuery = supabase
+      .from('revision_semanal_ingresos')
+      .select('*')
+      .order('started_at', { ascending: false });
+    
+    if (filters.terminal) {
+      sessionQuery = sessionQuery.eq('terminal', filters.terminal);
+    }
+    
+    if (filters.dateFrom) {
+      const fromIso = new Date(filters.dateFrom + 'T00:00:00').toISOString();
+      sessionQuery = sessionQuery.gte('started_at', fromIso);
+    }
+    
+    if (filters.dateTo) {
+      const toIso = new Date(filters.dateTo + 'T23:59:59').toISOString();
+      sessionQuery = sessionQuery.lte('started_at', toIso);
+    }
+    
+    const { data: rows, error } = await sessionQuery;
+    if (error) throw error;
+    
+    const deduplicateSessionsByInspectorHour = (items = []) => {
+      const result = [];
+      const seen = new Set();
+      
+      items.forEach((row) => {
+        // Ensure the report shows a single session per inspector/terminal/hour slot
+        const inspector = (row?.inspector || '').trim();
+        const terminal = (row?.terminal || '').trim();
+        const startedAt = row?.started_at ? new Date(row.started_at) : null;
+        
+        if (!inspector || !startedAt || Number.isNaN(startedAt.getTime())) {
+          result.push(row);
+          return;
+        }
+        
+        const key = [
+          inspector.toLowerCase(),
+          terminal.toLowerCase(),
+          startedAt.getFullYear(),
+          startedAt.getMonth(),
+          startedAt.getDate(),
+          startedAt.getHours()
+        ].join('|');
+        
+        if (seen.has(key)) return;
+        
+        seen.add(key);
+        result.push(row);
+      });
+      
+      return result;
+    };
+    
+    const sessions = rows || [];
+    const sessionsDeduped = deduplicateSessionsByInspectorHour(sessions);
+    APP_STATE.sessionReportRows = sessionsDeduped;
+    
+    const uniqueInspectors = new Set(sessionsDeduped.map(row => (row.inspector || '').trim()).filter(Boolean));
+    const totalBuses = sessionsDeduped.reduce((sum, row) => sum + (Number(row.bus_count) || 0), 0);
+    const totalTickets = sessionsDeduped.reduce((sum, row) => sum + (Number(row.ticket_count) || 0), 0);
+    
+    const ratioAggregate = sessionsDeduped.reduce((acc, row) => {
+      const buses = Number(row.bus_count) || 0;
+      const tickets = Number(row.ticket_count) || 0;
+      if (buses > 0) {
+        acc.sum += tickets / buses;
+        acc.count += 1;
+      }
+      return acc;
+    }, { sum: 0, count: 0 });
+    
+    const averageRatio = ratioAggregate.count > 0 ? ratioAggregate.sum / ratioAggregate.count : 0;
+    const averageEvaluation = ratioAggregate.count > 0
+      ? getSessionEvaluation({ bus_count: 1, ticket_count: averageRatio })
+      : { score: '—', note: 'Sin datos suficientes para evaluar.', label: 'Sin datos', className: 'text-info fw-medium' };
+    
+    const inspectorEl = document.getElementById('activeInspectorCount');
+    const busTotalEl = document.getElementById('sessionBusTotal');
+    const ticketTotalEl = document.getElementById('sessionTicketTotal');
+    const avgScoreEl = document.getElementById('sessionAverageScore');
+    const avgNoteEl = document.getElementById('sessionEvaluationNote');
+    const sessionCountBadge = document.getElementById('sessionCount');
+    
+    if (inspectorEl) inspectorEl.textContent = uniqueInspectors.size.toString();
+    if (busTotalEl) busTotalEl.textContent = totalBuses.toString();
+    if (ticketTotalEl) ticketTotalEl.textContent = totalTickets.toString();
+    if (avgScoreEl) avgScoreEl.textContent = averageEvaluation.score;
+    if (avgNoteEl) avgNoteEl.textContent = averageEvaluation.note;
+    if (sessionCountBadge) sessionCountBadge.textContent = sessionsDeduped.length.toString();
+    
+    const tableBody = document.querySelector('#sessionTable tbody');
+    if (tableBody) {
+      if (sessionsDeduped.length > 0) {
+        tableBody.innerHTML = sessionsDeduped.map((row, index) => {
+          const evaluation = getSessionEvaluation(row);
+          const started = formatDateTime(row.started_at);
+          const ended = row.ended_at ? formatDateTime(row.ended_at) : 'En curso';
+          
+          return `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHTML(row.inspector || '—')}</td>
+            <td>${escapeHTML(row.terminal || '—')}</td>
+            <td>${started}</td>
+            <td>${ended}</td>
+            <td>${Number(row.bus_count || 0)}</td>
+            <td>${Number(row.ticket_count || 0)}</td>
+            <td class="${evaluation.className}">${escapeHTML(evaluation.label)}</td>
+            <td>
+              <button class="btn btn-light btn-sm" data-action="session-detail" data-session-index="${index}">
+                <i class="fas fa-eye"></i> Ver detalle
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+        
+        tableBody.querySelectorAll('button[data-action="session-detail"]').forEach(button => {
+          button.addEventListener('click', () => {
+            const index = Number(button.dataset.sessionIndex || -1);
+            openSessionDetail(index);
+          });
+        });
+      } else {
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No hay ingresos registrados para los filtros seleccionados.</td></tr>';
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing session report:', error);
+    let message = error?.message || 'No se pudo cargar el informe de ingresos';
+    if (error?.code === '42P01') {
+      message = 'La tabla "revision_semanal_ingresos" no existe. Por favor créala para habilitar el informe.';
+    } else if (error?.code === '42501') {
+      message = 'Permisos insuficientes para leer "revision_semanal_ingresos". Verifica las políticas de seguridad (RLS).';
+    } else if (error?.details) {
+      message = `${message}. Detalle: ${error.details}`;
+    }
+    showNotification('error', 'Error', message);
+    const tableBody = document.querySelector('#sessionTable tbody');
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${escapeHTML(message)}</td></tr>`;
+    }
+  } finally {
+    clearTimeout(loaderId);
+    hideLoader();
+  }
+}
+
+function openSessionDetail(index) {
+  const sessions = APP_STATE.sessionReportRows || [];
+  const row = sessions[index];
+  if (!row) {
+    showNotification('warning', 'Detalle no disponible', 'No se encontró la sesión solicitada.');
+    return;
+  }
+  
+  const modal = document.getElementById('sessionDetailModal');
+  if (!modal) return;
+  
+  const busesRaw = row.buses;
+  let busEntries = [];
+  if (Array.isArray(busesRaw)) {
+    busEntries = busesRaw;
+  } else if (typeof busesRaw === 'string') {
+    try {
+      busEntries = JSON.parse(busesRaw) || [];
+    } catch (error) {
+      busEntries = [];
+    }
+  }
+  
+  const evaluation = getSessionEvaluation(row);
+  const inspectorChip = document.getElementById('sessionDetailInspector');
+  const terminalChip = document.getElementById('sessionDetailTerminal');
+  const rangeChip = document.getElementById('sessionDetailRange');
+  const busesChip = document.getElementById('sessionDetailBuses');
+  const ticketsChip = document.getElementById('sessionDetailTickets');
+  const evaluationText = document.getElementById('sessionDetailEvaluation');
+  const tableBody = document.querySelector('#sessionDetailTable tbody');
+  const findingsList = document.getElementById('sessionDetailFindings');
+  
+  if (inspectorChip) inspectorChip.innerHTML = `<i class="fas fa-user-check"></i><span>${escapeHTML(row.inspector || '—')}</span>`;
+  if (terminalChip) terminalChip.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${escapeHTML(row.terminal || '—')}`;
+  const dateRangeText = `${formatDateTime(row.started_at)} — ${row.ended_at ? formatDateTime(row.ended_at) : 'En curso'}`;
+  if (rangeChip) rangeChip.innerHTML = `<i class="fas fa-clock"></i> ${dateRangeText}`;
+  if (busesChip) busesChip.innerHTML = `<i class="fas fa-bus"></i> ${Number(row.bus_count || 0)} buses`;
+  if (ticketsChip) ticketsChip.innerHTML = `<i class="fas fa-ticket-alt"></i> ${Number(row.ticket_count || 0)} tickets`;
+  if (evaluationText) evaluationText.textContent = evaluation.note;
+  evaluationText?.classList.remove('text-success', 'text-primary', 'text-warning', 'text-danger', 'text-info', 'fw-bold', 'fw-medium');
+  evaluationText?.classList.add(...evaluation.className.split(' '));
+  
+  if (tableBody) {
+    if (busEntries.length > 0) {
+      tableBody.innerHTML = busEntries.map((bus, indexBus) => {
+        const tickets = Array.isArray(bus.tickets) ? bus.tickets.length : 0;
+        return `<tr>
+          <td>${indexBus + 1}</td>
+          <td>${escapeHTML(bus.bus_ppu || '—')}</td>
+          <td>${escapeHTML(bus.terminal || '—')}</td>
+          <td>${formatDateTime(bus.fecha)}</td>
+          <td>${escapeHTML(bus.estado || '—')}</td>
+          <td>${tickets}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No se registraron buses en esta sesión.</td></tr>';
+    }
+  }
+  
+  if (findingsList) {
+    const findings = [];
+    busEntries.forEach(bus => {
+      const tickets = Array.isArray(bus.tickets) ? bus.tickets : [];
+      tickets.forEach(ticket => {
+        findings.push(`<li><strong>${escapeHTML(bus.bus_ppu || 'Bus')}</strong> — ${escapeHTML(ticket.componente || 'Componente')} · ${escapeHTML(ticket.descripcion || ticket.descripcion_falla || 'Hallazgo')}</li>`);
+      });
+    });
+    
+    findingsList.innerHTML = findings.length > 0
+      ? findings.join('')
+      : '<li>No se generaron tickets durante esta sesión.</li>';
+  }
+  
+  showModal(modal);
 }
 
 /**
@@ -8385,6 +9028,33 @@ function setupFilters() {
     refreshExtinguisherReport();
   });
   
+  // Session report filters
+  document.getElementById('btnApplySessionFilters')?.addEventListener('click', () => {
+    const filters = {
+      terminal: document.getElementById('sessionTerminalFilter')?.value || '',
+      dateFrom: document.getElementById('sessionDateFrom')?.value || '',
+      dateTo: document.getElementById('sessionDateTo')?.value || ''
+    };
+    
+    APP_STATE.filters.sessions = filters;
+    refreshSessionReport(filters);
+  });
+  
+  document.getElementById('btnResetSessionFilters')?.addEventListener('click', () => {
+    const elements = {
+      terminal: document.getElementById('sessionTerminalFilter'),
+      dateFrom: document.getElementById('sessionDateFrom'),
+      dateTo: document.getElementById('sessionDateTo')
+    };
+    
+    if (elements.terminal) elements.terminal.value = '';
+    if (elements.dateFrom) elements.dateFrom.value = '';
+    if (elements.dateTo) elements.dateTo.value = '';
+    
+    APP_STATE.filters.sessions = {};
+    refreshSessionReport();
+  });
+  
   // Mobileye report filters
   document.getElementById('applyMobileyeFilters')?.addEventListener('click', () => {
     const filters = {
@@ -8580,6 +9250,7 @@ function initializeApp() {
         refreshPendingInspections();
         refreshReportTables();
         loadRecentActivity();
+        ensureActiveSessionLog();
       } catch (error) {
         console.error('Error loading saved session:', error);
         openLoginModal();
@@ -9135,6 +9806,14 @@ document.addEventListener('DOMContentLoaded', () => {
       hideModal(pendingModal);
     }
   });
+
+  // Session detail modal controls
+  const sessionDetailModal = document.getElementById('sessionDetailModal');
+  const closeSessionDetail = () => {
+    if (sessionDetailModal) hideModal(sessionDetailModal);
+  };
+  document.getElementById('sessionDetailClose')?.addEventListener('click', closeSessionDetail);
+  document.getElementById('sessionDetailDismiss')?.addEventListener('click', closeSessionDetail);
   
   // 14. Close modals when clicking outside
   document.querySelectorAll('.modal').forEach(modal => {
