@@ -2063,6 +2063,52 @@ textarea.form-control {
   color: var(--text);
 }
 
+/* Live alert banner */
+.live-alert {
+  position: fixed;
+  top: calc(var(--spacing-4) + env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -20px);
+  background-color: var(--bg-panel);
+  color: var(--dark);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-2) var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  z-index: calc(var(--z-toast) + 5);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.live-alert.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.live-alert i {
+  font-size: 1rem;
+}
+
+.live-alert-success {
+  border-left: 4px solid var(--success);
+}
+
+.live-alert-warning {
+  border-left: 4px solid var(--warning);
+}
+
+.live-alert-danger {
+  border-left: 4px solid var(--danger);
+}
+
+.live-alert-info {
+  border-left: 4px solid var(--info);
+}
+
 /* =========== Loader =========== */
 .loader-container {
   position: fixed;
@@ -4554,6 +4600,50 @@ function showNotification(type, title, message, duration = APP_CONFIG.notificati
   console.info(`Notification [${type}]: ${title} - ${message}`);
 }
 
+let liveAlertTimeout = null;
+
+function showLiveAlert(message, type = 'success') {
+  if (!message) return;
+  
+  const alertType = ['success', 'warning', 'danger', 'info'].includes(type) ? type : 'success';
+  if (liveAlertTimeout) {
+    clearTimeout(liveAlertTimeout);
+    liveAlertTimeout = null;
+  }
+  
+  const existing = document.getElementById('liveAlertBanner');
+  if (existing) {
+    existing.remove();
+  }
+  
+  const banner = document.createElement('div');
+  banner.id = 'liveAlertBanner';
+  banner.className = `live-alert live-alert-${alertType}`;
+  
+  const iconMap = {
+    success: 'fa-check-circle',
+    warning: 'fa-exclamation-triangle',
+    danger: 'fa-times-circle',
+    info: 'fa-info-circle'
+  };
+  
+  banner.innerHTML = `
+    <i class="fas ${iconMap[alertType] || iconMap.success}"></i>
+    <span>${escapeHTML(message)}</span>
+  `;
+  
+  document.body.appendChild(banner);
+  
+  requestAnimationFrame(() => banner.classList.add('show'));
+  
+  liveAlertTimeout = setTimeout(() => {
+    banner.classList.remove('show');
+    banner.addEventListener('transitionend', () => {
+      banner.remove();
+    }, { once: true });
+  }, 3500);
+}
+
 
 function escapeHTML(unsafe) {
   if (unsafe === null || unsafe === undefined) return '';
@@ -5843,6 +5933,7 @@ async function saveInspection() {
     }
     
     showNotification('success', 'Guardado Exitoso', 'Datos de la inspección guardados correctamente');
+    showLiveAlert('Inspección registrada correctamente', 'success');
     
     // Update related data
     refreshPendingInspections();
@@ -5865,6 +5956,7 @@ async function saveInspection() {
     if (formInputs.saveMsg) formInputs.saveMsg.innerHTML = '¡Error al guardar! <i class="fas fa-times-circle text-danger"></i>';
     
     showNotification('error', 'Error de Guardado', 'No se pudieron guardar los datos de la inspección');
+    showLiveAlert('No se pudo guardar la inspección', 'danger');
     return false;
   }
 }
@@ -6408,80 +6500,116 @@ async function refreshTagReport(filters = {}) {
  * @param {Object} filters - Filter criteria
  */
 async function refreshExtinguisherReport(filters = {}) {
+  const loaderId = showLoader('Cargando informe de extintores...');
+  
   try {
-    const loaderId = showLoader('Cargando informe de extintores...');
-    
-    let extinguisherQuery = supabase
-      .from('revision_semanal_extintor_inspeccion')
-      .select(`
-        *,
-        inspeccion:revision_semanal_inspecciones!inner(
-          bus_id,
-          semana_iso,
-          terminal,
-          bus:revision_semanal_buses!inner(
-            ppu,
-            asignacion,
-            modelo_chasis,
-            marca,
-            anio,
-            terminal
-          )
-        )
-      `)
-      .eq('inspeccion.semana_iso', APP_STATE.session.week);
+    let inspectionQuery = supabase
+      .from('revision_semanal_inspecciones')
+      .select('id, bus_id, terminal')
+      .eq('semana_iso', APP_STATE.session.week);
     
     if (filters.terminal) {
-      extinguisherQuery = extinguisherQuery.eq('inspeccion.terminal', filters.terminal);
+      inspectionQuery = inspectionQuery.eq('terminal', filters.terminal);
     }
     
+    const { data: inspectionRows, error: inspectionError } = await inspectionQuery;
+    if (inspectionError) throw inspectionError;
+    
+    const inspectionById = new Map();
+    const busIds = new Set();
+    
+    (inspectionRows || []).forEach(row => {
+      if (!row) return;
+      inspectionById.set(row.id, row);
+      if (row.bus_id) busIds.add(row.bus_id);
+    });
+    
+    let extinguisherRows = [];
+    
+    if (inspectionById.size > 0) {
+      const inspectionIds = Array.from(inspectionById.keys());
+      if (inspectionIds.length > 0) {
+        const { data: extinguisherData, error: extinguisherError } = await supabase
+          .from('revision_semanal_extintor_inspeccion')
+          .select('*')
+          .in('inspeccion_id', inspectionIds);
+        
+        if (extinguisherError) throw extinguisherError;
+        extinguisherRows = extinguisherData || [];
+      }
+    }
+    
+    const busMap = new Map();
+    if (busIds.size > 0) {
+      const { data: busRows, error: busError } = await supabase
+        .from('revision_semanal_buses')
+        .select('id, ppu, asignacion, modelo_chasis, marca, anio, terminal')
+        .in('id', Array.from(busIds));
+      if (busError) throw busError;
+      (busRows || []).forEach(bus => {
+        busMap.set(bus.id, bus);
+      });
+    }
+    
+    let filteredRows = extinguisherRows.slice();
+    
+    const applyExactFilter = (value, expected) =>
+      (value || '').toUpperCase() === (expected || '').toUpperCase();
+    
     if (filters.extinguisherStatus) {
-      extinguisherQuery = extinguisherQuery.eq('estado_extintor', filters.extinguisherStatus);
+      filteredRows = filteredRows.filter(row => applyExactFilter(row.estado_extintor, filters.extinguisherStatus));
     }
     
     if (filters.certificationStatus) {
-      extinguisherQuery = extinguisherQuery.eq('estado_certificacion', filters.certificationStatus);
+      filteredRows = filteredRows.filter(row => applyExactFilter(row.estado_certificacion, filters.certificationStatus));
     }
     
     if (filters.pressureStatus) {
-      extinguisherQuery = extinguisherQuery.eq('presion_carga', filters.pressureStatus);
+      filteredRows = filteredRows.filter(row => applyExactFilter(row.presion_carga, filters.pressureStatus));
     }
     
     if (filters.holderStatus) {
-      extinguisherQuery = extinguisherQuery.eq('estado_porta_extintor', filters.holderStatus);
+      filteredRows = filteredRows.filter(row => applyExactFilter(row.estado_porta_extintor, filters.holderStatus));
     }
     
-    const { data: extinguisherRows, error: extinguisherError } = await extinguisherQuery;
+    // Remove rows whose inspection is not available (safety net)
+    filteredRows = filteredRows.filter(row => inspectionById.has(row.inspeccion_id));
     
-    clearTimeout(loaderId);
-    hideLoader();
-    
-    if (extinguisherError) throw extinguisherError;
-    
-    const rows = extinguisherRows || [];
+    // Sort by PPU for consistent display
+    filteredRows.sort((a, b) => {
+      const inspectionA = inspectionById.get(a.inspeccion_id);
+      const inspectionB = inspectionById.get(b.inspeccion_id);
+      const busA = inspectionA ? busMap.get(inspectionA.bus_id) : null;
+      const busB = inspectionB ? busMap.get(inspectionB.bus_id) : null;
+      const ppuA = (busA?.ppu || '').toUpperCase();
+      const ppuB = (busB?.ppu || '').toUpperCase();
+      return ppuA.localeCompare(ppuB);
+    });
     
     const extinguisherReportCount = document.getElementById('extinguisherReportCount');
     const extinguisherCount = document.getElementById('extinguisherCount');
     
-    if (extinguisherReportCount) extinguisherReportCount.textContent = rows.length.toString();
-    if (extinguisherCount) extinguisherCount.textContent = rows.length.toString();
+    if (extinguisherReportCount) extinguisherReportCount.textContent = filteredRows.length.toString();
+    if (extinguisherCount) extinguisherCount.textContent = filteredRows.length.toString();
     
     const extinguisherTableBody = document.querySelector('#extinguisherTable tbody');
     
     if (extinguisherTableBody) {
-      if (rows.length > 0) {
-        extinguisherTableBody.innerHTML = rows.map((row, index) => {
-          const bus = row.inspeccion?.bus || {};
+      if (filteredRows.length > 0) {
+        extinguisherTableBody.innerHTML = filteredRows.map((row, index) => {
+          const inspection = inspectionById.get(row.inspeccion_id) || {};
+          const bus = busMap.get(inspection.bus_id) || {};
           const formattedExpiry = row.fecha_vencimiento ? new Date(row.fecha_vencimiento).toLocaleDateString('es-ES') : '—';
-          const location = row.ubicacion || bus.terminal || '';
+          const location = row.ubicacion || bus.terminal || inspection.terminal || '';
           
           const statusHighlight = (value) => {
-            if (!value) return '';
-            if (value === 'NO TIENE') return 'text-danger fw-bold';
-            if (value === 'DAÑADO') return 'text-warning fw-bold';
-            if (value === 'BAJA CARGA' || value === 'SOBRE CARGA') return 'text-warning fw-bold';
-            if (value === 'ABOLLADO') return 'text-warning fw-bold';
-            if (value === 'EXTINTOR NO ENTRA') return 'text-warning fw-bold';
+            const normalized = (value || '').toUpperCase();
+            if (!normalized) return '';
+            if (normalized === 'NO TIENE') return 'text-danger fw-bold';
+            if (normalized === 'DAÑADO') return 'text-warning fw-bold';
+            if (normalized === 'BAJA CARGA' || normalized === 'SOBRE CARGA') return 'text-warning fw-bold';
+            if (normalized === 'ABOLLADO') return 'text-warning fw-bold';
+            if (normalized === 'EXTINTOR NO ENTRA') return 'text-warning fw-bold';
             return '';
           };
           
@@ -6503,10 +6631,26 @@ async function refreshExtinguisherReport(filters = {}) {
         extinguisherTableBody.innerHTML = '<tr><td colspan="11" class="text-center">No hay datos disponibles</td></tr>';
       }
     }
+    
+    clearTimeout(loaderId);
+    hideLoader();
   } catch (error) {
+    clearTimeout(loaderId);
     hideLoader();
     console.error('Error refreshing extinguisher report:', error);
-    showNotification('error', 'Error', 'No se pudo cargar el informe de extintores');
+    let errorMessage = error?.message || 'No se pudo cargar el informe de extintores';
+    if (error?.code === '42P01') {
+      errorMessage = 'La tabla "revision_semanal_extintor_inspeccion" no existe en la base de datos. Crea la tabla y vuelve a intentarlo.';
+    }
+    showNotification('error', 'Error', errorMessage);
+    const extinguisherReportCount = document.getElementById('extinguisherReportCount');
+    const extinguisherCount = document.getElementById('extinguisherCount');
+    if (extinguisherReportCount) extinguisherReportCount.textContent = '0';
+    if (extinguisherCount) extinguisherCount.textContent = '0';
+    const extinguisherTableBody = document.querySelector('#extinguisherTable tbody');
+    if (extinguisherTableBody) {
+      extinguisherTableBody.innerHTML = `<tr><td colspan="11" class="text-center text-danger">${escapeHTML(errorMessage)}</td></tr>`;
+    }
   }
 }
 
