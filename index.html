@@ -4622,6 +4622,55 @@ function normalizeInspectorName(name) {
     .join(' ');
 }
 
+/**
+ * Inserts or updates an inspection section ensuring a single row per inspeccion_id
+ * @param {string} table - Supabase table name
+ * @param {Object} payload - Row data including inspeccion_id
+ * @returns {Promise<number|null>} Row id if available
+ */
+async function upsertInspectionSection(table, payload) {
+  if (!supabase) throw new Error('Supabase client not initialized');
+  if (!payload || !payload.inspeccion_id) {
+    throw new Error(`Payload for ${table} missing inspeccion_id`);
+  }
+  
+  const inspeccionId = payload.inspeccion_id;
+  const { data: existing, error: selectError } = await supabase
+    .from(table)
+    .select('id')
+    .eq('inspeccion_id', inspeccionId)
+    .maybeSingle();
+  
+  if (selectError && selectError.code !== 'PGRST116') {
+    throw selectError;
+  }
+  
+  if (existing?.id) {
+    const { error: updateError } = await supabase
+      .from(table)
+      .update(payload)
+      .eq('inspeccion_id', inspeccionId);
+    
+    if (updateError) {
+      throw updateError;
+    }
+    
+    return existing.id;
+  }
+  
+  const { data: inserted, error: insertError } = await supabase
+    .from(table)
+    .insert(payload)
+    .select('id')
+    .maybeSingle();
+  
+  if (insertError) {
+    throw insertError;
+  }
+  
+  return inserted?.id || null;
+}
+
 function isMobileView() {
   return window.matchMedia('(max-width: 768px)').matches;
 }
@@ -6416,9 +6465,8 @@ async function saveInspection() {
     APP_STATE.inspectionId = inspectionId;
     
     // 2. Save cameras section
-    const { error: cameraError } = await supabase
-      .from('revision_semanal_camara_inspeccion')
-      .upsert({
+    try {
+      await upsertInspectionSection('revision_semanal_camara_inspeccion', {
         inspeccion_id: inspectionId,
         monitor_camara: formInputs.monitorCamera ? formInputs.monitorCamera.value === 'SI' : false,
         monitor_detalle: formInputs.monitorDetail ? formInputs.monitorDetail.value || null : null,
@@ -6431,32 +6479,28 @@ async function saveInspection() {
         q_doors_open: formInputs.doorsOpen ? formInputs.doorsOpen.value || null : null,
         q_doors_closed: formInputs.doorsClosed ? formInputs.doorsClosed.value || null : null,
         observacion: formInputs.cameraObservations ? formInputs.cameraObservations.value || null : null
-      }, { onConflict: 'inspeccion_id' });
-    
-    if (cameraError) {
+      });
+    } catch (cameraError) {
       console.error('Error guardando sección de cámaras:', cameraError);
       throw cameraError;
     }
     
     // 3. Save TAG section
-    const { error: tagError } = await supabase
-      .from('revision_semanal_tag_inspeccion')
-      .upsert({
+    try {
+      await upsertInspectionSection('revision_semanal_tag_inspeccion', {
         inspeccion_id: inspectionId,
         tag_tiene: formInputs.hasTag ? formInputs.hasTag.value === 'yes' : true,
         tag_serie: formInputs.tagSerial ? formInputs.tagSerial.value || null : null,
         observacion: formInputs.tagObservations ? formInputs.tagObservations.value || null : null
-      }, { onConflict: 'inspeccion_id' });
-    
-    if (tagError) {
+      });
+    } catch (tagError) {
       console.error('Error guardando sección de TAG:', tagError);
       throw tagError;
     }
     
     // 4. Save extinguisher section
-    const { error: extinguisherError } = await supabase
-      .from('revision_semanal_extintor_inspeccion')
-      .upsert({
+    try {
+      await upsertInspectionSection('revision_semanal_extintor_inspeccion', {
         inspeccion_id: inspectionId,
         ubicacion: formInputs.extinguisherLocation ? formInputs.extinguisherLocation.value.trim() || null : null,
         fecha_vencimiento: formInputs.extinguisherExpiry && formInputs.extinguisherExpiry.value ?
@@ -6468,18 +6512,16 @@ async function saveInspection() {
         presion_carga: formInputs.pressureStatus ? formInputs.pressureStatus.value || null : null,
         cilindro_estado: formInputs.cylinderStatus ? formInputs.cylinderStatus.value || null : null,
         estado_porta_extintor: formInputs.holderStatus ? formInputs.holderStatus.value || null : null
-      }, { onConflict: 'inspeccion_id' });
-    
-    if (extinguisherError) {
+      });
+    } catch (extinguisherError) {
       console.error('Error guardando sección de extintor:', extinguisherError);
       throw extinguisherError;
     }
     
     // 5. Save Mobileye section (if applicable)
     if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
-      const { error: mobileyeError } = await supabase
-        .from('revision_semanal_movileye_inspeccion')
-        .upsert({
+      try {
+        await upsertInspectionSection('revision_semanal_movileye_inspeccion', {
           inspeccion_id: inspectionId,
           estado: formInputs.mobileyeStatus ? formInputs.mobileyeStatus.value || null : null,
           alerta_izq: formInputs.leftAlert ? formInputs.leftAlert.value || null : null,
@@ -6493,26 +6535,23 @@ async function saveInspection() {
           fecha_siniestro: formInputs.incidentDate && formInputs.incidentDate.value ? 
             new Date(formInputs.incidentDate.value).toISOString() : null,
           nro_siniestro: formInputs.incidentNumber ? formInputs.incidentNumber.value || null : null
-        }, { onConflict: 'inspeccion_id' });
-      
-      if (mobileyeError) {
+        });
+      } catch (mobileyeError) {
         console.error('Error guardando sección de Mobileye:', mobileyeError);
         throw mobileyeError;
       }
     }
     
     // 6. Save odometer section
-    const { error: odometerError } = await supabase
-      .from('revision_semanal_odometro_inspeccion')
-      .upsert({
+    try {
+      await upsertInspectionSection('revision_semanal_odometro_inspeccion', {
         inspeccion_id: inspectionId,
         lectura_km: formInputs.odometerReading && formInputs.odometerReading.value ? 
           Number(formInputs.odometerReading.value) : null,
         estado_odometro: formInputs.odometerStatus ? formInputs.odometerStatus.value : 'funcionando',
         observacion: formInputs.odometerObservations ? formInputs.odometerObservations.value || null : null
-      }, { onConflict: 'inspeccion_id' });
-    
-    if (odometerError) {
+      });
+    } catch (odometerError) {
       console.error('Error guardando sección de odómetro:', odometerError);
       throw odometerError;
     }
