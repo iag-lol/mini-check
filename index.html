@@ -2445,6 +2445,11 @@ textarea.form-control {
             <span>TAG</span>
             <span class="badge badge-light" id="tagCount">0</span>
           </div>
+          <div class="nav-item" data-section="extinguisher-report">
+            <i class="fas fa-fire-extinguisher"></i>
+            <span>Extintores</span>
+            <span class="badge badge-light" id="extinguisherCount">0</span>
+          </div>
           <div class="nav-item" data-section="mobileye-report">
             <i class="fas fa-eye"></i>
             <span>Mobileye</span>
@@ -2899,6 +2904,93 @@ textarea.form-control {
                   </div>
                 </div>
               </div>
+
+              <div class="toggle-section" id="toggleExtinguisher">
+                <div class="toggle-section-title">
+                  <div class="section-icon">
+                    <i class="fas fa-fire-extinguisher"></i>
+                  </div>
+                  <span>Extintores</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+              </div>
+              
+              <div class="toggle-section-content" id="extinguisherSection">
+                <div class="form-grid">
+                  <div class="col-4 col-sm-12 form-group">
+                    <label class="form-label">Ubicación (Terminal)</label>
+                    <input type="text" class="form-control" id="extinguisherLocation" placeholder="Ej., El Roble / Patio Norte">
+                  </div>
+                  
+                  <div class="col-4 col-sm-12 form-group">
+                    <label class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-control" id="extinguisherExpiry">
+                  </div>
+                  
+                  <div class="col-4 col-sm-12 form-group">
+                    <label class="form-label">Estado Extintor</label>
+                    <select class="form-control" id="extinguisherStatus">
+                      <option value="TIENE">TIENE</option>
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="DAÑADO">DAÑADO</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Estado Certificación</label>
+                    <select class="form-control" id="certificationStatus">
+                      <option value="TIENE">TIENE</option>
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="DAÑADO">DAÑADO</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Estado Sonda</label>
+                    <select class="form-control" id="probeStatus">
+                      <option value="TIENE">TIENE</option>
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="DAÑADO">DAÑADO</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Estado Manómetro</label>
+                    <select class="form-control" id="manometerStatus">
+                      <option value="TIENE">TIENE</option>
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="DAÑADO">DAÑADO</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Presión / Carga</label>
+                    <select class="form-control" id="pressureStatus">
+                      <option value="OPTIMA">OPTIMA</option>
+                      <option value="BAJA CARGA">BAJA CARGA</option>
+                      <option value="SOBRE CARGA">SOBRE CARGA</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Cilindro</label>
+                    <select class="form-control" id="cylinderStatus">
+                      <option value="BUEN ESTADO">BUEN ESTADO</option>
+                      <option value="ABOLLADO">ABOLLADO</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-3 col-sm-12 form-group">
+                    <label class="form-label">Estado Porta Extintor</label>
+                    <select class="form-control" id="holderStatus">
+                      <option value="TIENE">TIENE</option>
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="DAÑADO">DAÑADO</option>
+                      <option value="EXTINTOR NO ENTRA">EXTINTOR NO ENTRA</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
               
               <!-- Sección Mobileye (condicionalmente visible) -->
               <div id="mobileyeSection">
@@ -3123,7 +3215,6 @@ textarea.form-control {
                 <select class="form-control" id="camerasMakeFilter">
                   <option value="">Todas</option>
                   <option>Volvo</option>
-                  <option>Mercedes-Benz</option>
                   <option>Scania</option>
                 </select>
               </div>
@@ -3230,6 +3321,110 @@ textarea.form-control {
                     <th>TAG</th>
                     <th>Serie TAG</th>
                     <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- INFORME DE EXTINTORES -->
+        <section id="section-extinguisher-report" class="hidden">
+          <div class="card scaleIn">
+            <div class="card-header">
+              <h3 class="card-title">Informe de Extintores</h3>
+              <div class="d-flex align-center gap-3">
+                <span class="chip">Registros: <strong id="extinguisherReportCount">0</strong></span>
+                <button class="btn btn-primary btn-sm" id="btnExportExtinguishers">
+                  <i class="fas fa-file-excel"></i> Exportar .XLSX
+                </button>
+              </div>
+            </div>
+            
+            <div class="filters-container" id="extinguisherFilterContainer">
+              <div class="filter-title">
+                <i class="fas fa-filter text-primary"></i>
+                <h5>Filtros</h5>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Terminal</label>
+                <select class="form-control" id="extinguisherTerminalFilter">
+                  <option value="">Todos</option>
+                  <option>El Roble</option>
+                  <option>La Reina</option>
+                  <option>Maria Angelica</option>
+                  <option>El Descanso</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Estado Extintor</label>
+                <select class="form-control" id="extinguisherStatusFilter">
+                  <option value="">Todos</option>
+                  <option value="TIENE">Tiene</option>
+                  <option value="NO TIENE">No tiene</option>
+                  <option value="DAÑADO">Dañado</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Estado Certificación</label>
+                <select class="form-control" id="extinguisherCertificationFilter">
+                  <option value="">Todos</option>
+                  <option value="TIENE">Tiene</option>
+                  <option value="NO TIENE">No tiene</option>
+                  <option value="DAÑADO">Dañado</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Presión / Carga</label>
+                <select class="form-control" id="extinguisherPressureFilter">
+                  <option value="">Todas</option>
+                  <option value="OPTIMA">Óptima</option>
+                  <option value="BAJA CARGA">Baja carga</option>
+                  <option value="SOBRE CARGA">Sobre carga</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Estado Porta Extintor</label>
+                <select class="form-control" id="extinguisherHolderFilter">
+                  <option value="">Todos</option>
+                  <option value="TIENE">Tiene</option>
+                  <option value="NO TIENE">No tiene</option>
+                  <option value="DAÑADO">Dañado</option>
+                  <option value="EXTINTOR NO ENTRA">Extintor no entra</option>
+                </select>
+              </div>
+              
+              <div class="filter-actions">
+                <button class="btn btn-light btn-sm" id="resetExtinguisherFilters">
+                  <i class="fas fa-redo"></i> Restablecer
+                </button>
+                <button class="btn btn-primary btn-sm" id="applyExtinguisherFilters">
+                  <i class="fas fa-check"></i> Aplicar
+                </button>
+              </div>
+            </div>
+            
+            <div class="table-container">
+              <table class="table" id="extinguisherTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>PPU</th>
+                    <th>Ubicación</th>
+                    <th>Fecha Vencimiento</th>
+                    <th>Estado Extintor</th>
+                    <th>Estado Certificación</th>
+                    <th>Estado Sonda</th>
+                    <th>Estado Manómetro</th>
+                    <th>Presión / Carga</th>
+                    <th>Cilindro</th>
+                    <th>Estado Porta Extintor</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -3432,11 +3627,9 @@ textarea.form-control {
                   <option value="">Todos</option>
                   <option>Cámaras</option>
                   <option>TAG</option>
+                  <option>Extintor</option>
                   <option>Mobileye</option>
                   <option>Odómetro</option>
-                  <option>Motor</option>
-                  <option>Frenos</option>
-                  <option>Transmisión</option>
                   <option>Otro</option>
                 </select>
               </div>
@@ -3561,7 +3754,6 @@ textarea.form-control {
                 <select class="form-control" id="fleetMakeFilter">
                   <option value="">Todas</option>
                   <option>Volvo</option>
-                  <option>Mercedes-Benz</option>
                   <option>Scania</option>
                 </select>
               </div>
@@ -3814,6 +4006,10 @@ textarea.form-control {
         <i class="fas fa-tag"></i>
         <span>Tag</span>
       </div>
+      <div class="nav-item" data-section="extinguisher-report">
+        <i class="fas fa-fire-extinguisher"></i>
+        <span>Extintores</span>
+      </div>
       <div class="nav-item" data-section="fleet-status">
         <i class="fas fa-bus"></i>
         <span>Flota</span>
@@ -4009,11 +4205,9 @@ textarea.form-control {
               <option value="">— Seleccionar —</option>
               <option>Cámaras</option>
               <option>TAG</option>
+              <option>Extintor</option>
               <option>Mobileye</option>
               <option>Odómetro</option>
-              <option>Motor</option>
-              <option>Frenos</option>
-              <option>Transmisión</option>
               <option>Otro</option>
             </select>
           </div>
@@ -4090,6 +4284,7 @@ const APP_STATE = {
   filters: {
     cameras: {},
     tag: {},
+    extinguishers: {},
     mobileye: {},
     odometer: {},
     tickets: {},
@@ -4359,11 +4554,7 @@ function showNotification(type, title, message, duration = APP_CONFIG.notificati
   console.info(`Notification [${type}]: ${title} - ${message}`);
 }
 
-/**
- * Escapes HTML special characters
- * @param {string} unsafe - Unsafe string that might contain HTML
- * @returns {string} Escaped safe string
- */
+
 function escapeHTML(unsafe) {
   if (unsafe === null || unsafe === undefined) return '';
   const value = typeof unsafe === 'string' ? unsafe : String(unsafe);
@@ -4375,11 +4566,7 @@ function escapeHTML(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-/**
- * Shows a modal dialog
- * @param {HTMLElement} modal - Modal element to show
- * @param {boolean} noBackdrop - Whether to hide the backdrop
- */
+
 function showModal(modal, noBackdrop = false) {
   if (!modal) return;
   
@@ -4408,10 +4595,7 @@ function showModal(modal, noBackdrop = false) {
   document.addEventListener('keydown', handleEscapeKey);
 }
 
-/**
- * Hides a modal dialog
- * @param {HTMLElement} modal - Modal element to hide
- */
+
 function hideModal(modal) {
   if (!modal) return;
   
@@ -4435,10 +4619,7 @@ function hideModal(modal) {
   document.removeEventListener('keydown', handleEscapeKey);
 }
 
-/**
- * Handles escape key press for modals
- * @param {KeyboardEvent} e - Keyboard event
- */
+
 function handleEscapeKey(e) {
   if (e.key === 'Escape') {
     const visibleModals = document.querySelectorAll('.modal.show');
@@ -4449,10 +4630,7 @@ function handleEscapeKey(e) {
   }
 }
 
-/**
- * Sets the theme
- * @param {string} theme - Theme to set (light, dark, system)
- */
+
 function applyTheme(theme) {
   if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.body.classList.add('dark-mode');
@@ -4497,6 +4675,7 @@ function showSection(sectionId) {
     'dashboard': document.getElementById('section-dashboard'),
     'cameras-report': document.getElementById('section-cameras-report'),
     'tag-report': document.getElementById('section-tag-report'),
+    'extinguisher-report': document.getElementById('section-extinguisher-report'),
     'mobileye-report': document.getElementById('section-mobileye-report'),
     'odometer-report': document.getElementById('section-odometer-report'),
     'maintenance-tickets': document.getElementById('section-maintenance-tickets'),
@@ -4572,6 +4751,9 @@ function loadSectionData(sectionId) {
       break;
     case 'tag-report':
       refreshTagReport();
+      break;
+    case 'extinguisher-report':
+      refreshExtinguisherReport();
       break;
     case 'mobileye-report':
       refreshMobileyeReport();
@@ -5108,7 +5290,28 @@ async function loadInspectionSections(inspectionId) {
       if (formInputs.tagObservations) formInputs.tagObservations.value = tagData.observacion || '';
     }
     
-    // 3. Load Mobileye data (if applicable)
+    // 3. Load extinguisher data
+    const { data: extinguisherData } = await supabase
+      .from('revision_semanal_extintor_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle();
+    
+    if (extinguisherData) {
+      if (formInputs.extinguisherLocation) formInputs.extinguisherLocation.value = extinguisherData.ubicacion || '';
+      if (formInputs.extinguisherExpiry) {
+        formInputs.extinguisherExpiry.value = extinguisherData.fecha_vencimiento ? extinguisherData.fecha_vencimiento.substring(0, 10) : '';
+      }
+      if (formInputs.extinguisherStatus) formInputs.extinguisherStatus.value = extinguisherData.estado_extintor || 'TIENE';
+      if (formInputs.certificationStatus) formInputs.certificationStatus.value = extinguisherData.estado_certificacion || 'TIENE';
+      if (formInputs.probeStatus) formInputs.probeStatus.value = extinguisherData.estado_sonda || 'TIENE';
+      if (formInputs.manometerStatus) formInputs.manometerStatus.value = extinguisherData.estado_manometro || 'TIENE';
+      if (formInputs.pressureStatus) formInputs.pressureStatus.value = extinguisherData.presion_carga || 'OPTIMA';
+      if (formInputs.cylinderStatus) formInputs.cylinderStatus.value = extinguisherData.cilindro_estado || 'BUEN ESTADO';
+      if (formInputs.holderStatus) formInputs.holderStatus.value = extinguisherData.estado_porta_extintor || 'TIENE';
+    }
+    
+    // 4. Load Mobileye data (if applicable)
     if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
       const { data: mobileyeData } = await supabase
         .from('revision_semanal_movileye_inspeccion')
@@ -5135,7 +5338,7 @@ async function loadInspectionSections(inspectionId) {
       }
     }
     
-    // 4. Load odometer data
+    // 5. Load odometer data
     const { data: odometerData } = await supabase
       .from('revision_semanal_odometro_inspeccion')
       .select('*')
@@ -5201,6 +5404,17 @@ function getFormInputs() {
     tagSerial: document.getElementById('tagSerial'),
     tagObservations: document.getElementById('tagObservations'),
     
+    // Extinguisher section
+    extinguisherLocation: document.getElementById('extinguisherLocation'),
+    extinguisherExpiry: document.getElementById('extinguisherExpiry'),
+    extinguisherStatus: document.getElementById('extinguisherStatus'),
+    certificationStatus: document.getElementById('certificationStatus'),
+    probeStatus: document.getElementById('probeStatus'),
+    manometerStatus: document.getElementById('manometerStatus'),
+    pressureStatus: document.getElementById('pressureStatus'),
+    cylinderStatus: document.getElementById('cylinderStatus'),
+    holderStatus: document.getElementById('holderStatus'),
+    
     // Mobileye section
     mobileyeStatus: document.getElementById('mobileyeStatus'),
     leftAlert: document.getElementById('leftAlert'),
@@ -5251,15 +5465,25 @@ function clearForm() {
   if (formInputs.tagSerial) formInputs.tagSerial.value = '';
   if (formInputs.tagObservations) formInputs.tagObservations.value = '';
   
-    if (formInputs.mobileyeStatus) formInputs.mobileyeStatus.value = '';
-    if (formInputs.leftAlert) formInputs.leftAlert.value = 'BUENO';
-    if (formInputs.rightAlert) formInputs.rightAlert.value = 'BUENO';
-    if (formInputs.console) formInputs.console.value = 'BUENO';
-    if (formInputs.frontSensor) formInputs.frontSensor.value = 'BUENO';
-    if (formInputs.leftSensor) formInputs.leftSensor.value = 'BUENO';
-    if (formInputs.rightSensor) formInputs.rightSensor.value = 'BUENO';
-    if (formInputs.rearLeftSensor) formInputs.rearLeftSensor.value = 'BUENO';
-    if (formInputs.rearRightSensor) formInputs.rearRightSensor.value = 'BUENO';
+  if (formInputs.extinguisherLocation) formInputs.extinguisherLocation.value = '';
+  if (formInputs.extinguisherExpiry) formInputs.extinguisherExpiry.value = '';
+  if (formInputs.extinguisherStatus) formInputs.extinguisherStatus.value = 'TIENE';
+  if (formInputs.certificationStatus) formInputs.certificationStatus.value = 'TIENE';
+  if (formInputs.probeStatus) formInputs.probeStatus.value = 'TIENE';
+  if (formInputs.manometerStatus) formInputs.manometerStatus.value = 'TIENE';
+  if (formInputs.pressureStatus) formInputs.pressureStatus.value = 'OPTIMA';
+  if (formInputs.cylinderStatus) formInputs.cylinderStatus.value = 'BUEN ESTADO';
+  if (formInputs.holderStatus) formInputs.holderStatus.value = 'TIENE';
+  
+  if (formInputs.mobileyeStatus) formInputs.mobileyeStatus.value = '';
+  if (formInputs.leftAlert) formInputs.leftAlert.value = 'BUENO';
+  if (formInputs.rightAlert) formInputs.rightAlert.value = 'BUENO';
+  if (formInputs.console) formInputs.console.value = 'BUENO';
+  if (formInputs.frontSensor) formInputs.frontSensor.value = 'BUENO';
+  if (formInputs.leftSensor) formInputs.leftSensor.value = 'BUENO';
+  if (formInputs.rightSensor) formInputs.rightSensor.value = 'BUENO';
+  if (formInputs.rearLeftSensor) formInputs.rearLeftSensor.value = 'BUENO';
+  if (formInputs.rearRightSensor) formInputs.rearRightSensor.value = 'BUENO';
   if (formInputs.incidentDate) formInputs.incidentDate.value = '';
   if (formInputs.incidentNumber) formInputs.incidentNumber.value = '';
   
@@ -5396,6 +5620,43 @@ function evaluateCriticality() {
     issues.push('Bus sin TAG');
   }
   
+  // Check extinguisher section
+  const criticalExtinguisherStates = ['NO TIENE', 'DAÑADO'];
+  if (formInputs.extinguisherStatus && criticalExtinguisherStates.includes(formInputs.extinguisherStatus.value)) {
+    status = 'Observaciones';
+    issues.push(`Extintor: ${formInputs.extinguisherStatus.value}`);
+  }
+  
+  if (formInputs.certificationStatus && criticalExtinguisherStates.includes(formInputs.certificationStatus.value)) {
+    status = 'Observaciones';
+    issues.push(`Certificación extintor: ${formInputs.certificationStatus.value}`);
+  }
+  
+  if (formInputs.probeStatus && criticalExtinguisherStates.includes(formInputs.probeStatus.value)) {
+    status = 'Observaciones';
+    issues.push(`Sonda extintor: ${formInputs.probeStatus.value}`);
+  }
+  
+  if (formInputs.manometerStatus && criticalExtinguisherStates.includes(formInputs.manometerStatus.value)) {
+    status = 'Observaciones';
+    issues.push(`Manómetro extintor: ${formInputs.manometerStatus.value}`);
+  }
+  
+  if (formInputs.pressureStatus && formInputs.pressureStatus.value !== 'OPTIMA') {
+    status = 'Observaciones';
+    issues.push(`Presión extintor: ${formInputs.pressureStatus.value}`);
+  }
+  
+  if (formInputs.cylinderStatus && formInputs.cylinderStatus.value === 'ABOLLADO') {
+    status = 'Observaciones';
+    issues.push('Cilindro de extintor abollado');
+  }
+  
+  if (formInputs.holderStatus && formInputs.holderStatus.value !== 'TIENE') {
+    status = 'Observaciones';
+    issues.push(`Porta extintor: ${formInputs.holderStatus.value}`);
+  }
+  
   // Check Mobileye for VOLVO buses
   if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
     const mobileyeStatusValue = formInputs.mobileyeStatus ? (formInputs.mobileyeStatus.value || '').toLowerCase() : '';
@@ -5513,7 +5774,24 @@ async function saveInspection() {
         observacion: formInputs.tagObservations ? formInputs.tagObservations.value || null : null
       }, { onConflict: 'inspeccion_id' });
     
-    // 4. Save Mobileye section (if applicable)
+    // 4. Save extinguisher section
+    await supabase
+      .from('revision_semanal_extintor_inspeccion')
+      .upsert({
+        inspeccion_id: inspectionId,
+        ubicacion: formInputs.extinguisherLocation ? formInputs.extinguisherLocation.value.trim() || null : null,
+        fecha_vencimiento: formInputs.extinguisherExpiry && formInputs.extinguisherExpiry.value ?
+          new Date(formInputs.extinguisherExpiry.value).toISOString() : null,
+        estado_extintor: formInputs.extinguisherStatus ? formInputs.extinguisherStatus.value || null : null,
+        estado_certificacion: formInputs.certificationStatus ? formInputs.certificationStatus.value || null : null,
+        estado_sonda: formInputs.probeStatus ? formInputs.probeStatus.value || null : null,
+        estado_manometro: formInputs.manometerStatus ? formInputs.manometerStatus.value || null : null,
+        presion_carga: formInputs.pressureStatus ? formInputs.pressureStatus.value || null : null,
+        cilindro_estado: formInputs.cylinderStatus ? formInputs.cylinderStatus.value || null : null,
+        estado_porta_extintor: formInputs.holderStatus ? formInputs.holderStatus.value || null : null
+      }, { onConflict: 'inspeccion_id' });
+    
+    // 5. Save Mobileye section (if applicable)
     if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
       await supabase
         .from('revision_semanal_movileye_inspeccion')
@@ -5534,7 +5812,7 @@ async function saveInspection() {
         }, { onConflict: 'inspeccion_id' });
     }
     
-    // 5. Save odometer section
+    // 6. Save odometer section
     await supabase
       .from('revision_semanal_odometro_inspeccion')
       .upsert({
@@ -5545,7 +5823,7 @@ async function saveInspection() {
         observacion: formInputs.odometerObservations ? formInputs.odometerObservations.value || null : null
       }, { onConflict: 'inspeccion_id' });
     
-    // 6. Generate maintenance tickets
+    // 7. Generate maintenance tickets
     await createMaintenanceTickets(inspectionId);
     
     clearTimeout(loaderId);
@@ -5663,7 +5941,53 @@ async function createMaintenanceTickets(inspectionId) {
     });
   }
   
-  // 3. Check for Mobileye issues
+  // 3. Check for extinguisher issues
+  const extinguisherIssues = [];
+  const extinguisherStatusValue = formInputs.extinguisherStatus ? formInputs.extinguisherStatus.value : '';
+  const certificationStatusValue = formInputs.certificationStatus ? formInputs.certificationStatus.value : '';
+  const probeStatusValue = formInputs.probeStatus ? formInputs.probeStatus.value : '';
+  const manometerStatusValue = formInputs.manometerStatus ? formInputs.manometerStatus.value : '';
+  const pressureStatusValue = formInputs.pressureStatus ? formInputs.pressureStatus.value : '';
+  const cylinderStatusValue = formInputs.cylinderStatus ? formInputs.cylinderStatus.value : '';
+  const holderStatusValue = formInputs.holderStatus ? formInputs.holderStatus.value : '';
+  
+  if (extinguisherStatusValue === 'NO TIENE') extinguisherIssues.push('Extintor ausente');
+  if (extinguisherStatusValue === 'DAÑADO') extinguisherIssues.push('Extintor dañado');
+  if (certificationStatusValue === 'NO TIENE') extinguisherIssues.push('Sin certificación vigente');
+  if (certificationStatusValue === 'DAÑADO') extinguisherIssues.push('Certificación dañada');
+  if (probeStatusValue === 'NO TIENE') extinguisherIssues.push('Sonda no disponible');
+  if (probeStatusValue === 'DAÑADO') extinguisherIssues.push('Sonda dañada');
+  if (manometerStatusValue === 'NO TIENE') extinguisherIssues.push('Manómetro no disponible');
+  if (manometerStatusValue === 'DAÑADO') extinguisherIssues.push('Manómetro dañado');
+  if (pressureStatusValue && pressureStatusValue !== 'OPTIMA') extinguisherIssues.push(`Presión fuera de rango (${pressureStatusValue})`);
+  if (cylinderStatusValue === 'ABOLLADO') extinguisherIssues.push('Cilindro abollado');
+  if (holderStatusValue && holderStatusValue !== 'TIENE') extinguisherIssues.push(`Porta extintor: ${holderStatusValue}`);
+  
+  if (extinguisherIssues.length > 0) {
+    const locationValue = formInputs.extinguisherLocation ? formInputs.extinguisherLocation.value.trim() : '';
+    const expiryValue = formInputs.extinguisherExpiry ? formInputs.extinguisherExpiry.value : '';
+    
+    const details = [
+      extinguisherIssues.join('; ')
+    ];
+    
+    if (locationValue) {
+      details.push(`Ubicación reportada: ${locationValue}`);
+    }
+    
+    if (expiryValue) {
+      const formattedExpiry = new Date(expiryValue).toLocaleDateString('es-ES');
+      details.push(`Vencimiento: ${formattedExpiry}`);
+    }
+    
+    tickets.push({
+      origin: 'extinguisher',
+      component: 'Extintor',
+      description: details.filter(Boolean).join('. ') + '.'
+    });
+  }
+  
+  // 4. Check for Mobileye issues
   if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
     if (formInputs.mobileyeStatus && 
         (formInputs.mobileyeStatus.value === 'dañado' || 
@@ -5688,7 +6012,7 @@ async function createMaintenanceTickets(inspectionId) {
     }
   }
   
-  // 4. Check for odometer issues
+  // 5. Check for odometer issues
   if (formInputs.odometerStatus && 
       (formInputs.odometerStatus.value === 'dañado' || 
        formInputs.odometerStatus.value === 'no funciona')) {
@@ -5901,6 +6225,7 @@ async function refreshReportTables() {
     await Promise.all([
       refreshCamerasReport(),
       refreshTagReport(),
+      refreshExtinguisherReport(),
       refreshMobileyeReport(),
       refreshOdometerReport()
     ]);
@@ -6075,6 +6400,113 @@ async function refreshTagReport(filters = {}) {
     hideLoader();
     console.error('Error refreshing TAG report:', error);
     showNotification('error', 'Error', 'No se pudo cargar el informe de TAG');
+  }
+}
+
+/**
+ * Refreshes the extinguisher report table
+ * @param {Object} filters - Filter criteria
+ */
+async function refreshExtinguisherReport(filters = {}) {
+  try {
+    const loaderId = showLoader('Cargando informe de extintores...');
+    
+    let extinguisherQuery = supabase
+      .from('revision_semanal_extintor_inspeccion')
+      .select(`
+        *,
+        inspeccion:revision_semanal_inspecciones!inner(
+          bus_id,
+          semana_iso,
+          terminal,
+          bus:revision_semanal_buses!inner(
+            ppu,
+            asignacion,
+            modelo_chasis,
+            marca,
+            anio,
+            terminal
+          )
+        )
+      `)
+      .eq('inspeccion.semana_iso', APP_STATE.session.week);
+    
+    if (filters.terminal) {
+      extinguisherQuery = extinguisherQuery.eq('inspeccion.terminal', filters.terminal);
+    }
+    
+    if (filters.extinguisherStatus) {
+      extinguisherQuery = extinguisherQuery.eq('estado_extintor', filters.extinguisherStatus);
+    }
+    
+    if (filters.certificationStatus) {
+      extinguisherQuery = extinguisherQuery.eq('estado_certificacion', filters.certificationStatus);
+    }
+    
+    if (filters.pressureStatus) {
+      extinguisherQuery = extinguisherQuery.eq('presion_carga', filters.pressureStatus);
+    }
+    
+    if (filters.holderStatus) {
+      extinguisherQuery = extinguisherQuery.eq('estado_porta_extintor', filters.holderStatus);
+    }
+    
+    const { data: extinguisherRows, error: extinguisherError } = await extinguisherQuery;
+    
+    clearTimeout(loaderId);
+    hideLoader();
+    
+    if (extinguisherError) throw extinguisherError;
+    
+    const rows = extinguisherRows || [];
+    
+    const extinguisherReportCount = document.getElementById('extinguisherReportCount');
+    const extinguisherCount = document.getElementById('extinguisherCount');
+    
+    if (extinguisherReportCount) extinguisherReportCount.textContent = rows.length.toString();
+    if (extinguisherCount) extinguisherCount.textContent = rows.length.toString();
+    
+    const extinguisherTableBody = document.querySelector('#extinguisherTable tbody');
+    
+    if (extinguisherTableBody) {
+      if (rows.length > 0) {
+        extinguisherTableBody.innerHTML = rows.map((row, index) => {
+          const bus = row.inspeccion?.bus || {};
+          const formattedExpiry = row.fecha_vencimiento ? new Date(row.fecha_vencimiento).toLocaleDateString('es-ES') : '—';
+          const location = row.ubicacion || bus.terminal || '';
+          
+          const statusHighlight = (value) => {
+            if (!value) return '';
+            if (value === 'NO TIENE') return 'text-danger fw-bold';
+            if (value === 'DAÑADO') return 'text-warning fw-bold';
+            if (value === 'BAJA CARGA' || value === 'SOBRE CARGA') return 'text-warning fw-bold';
+            if (value === 'ABOLLADO') return 'text-warning fw-bold';
+            if (value === 'EXTINTOR NO ENTRA') return 'text-warning fw-bold';
+            return '';
+          };
+          
+          return `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHTML(bus.ppu || '')}</td>
+            <td>${escapeHTML(location)}</td>
+            <td>${formattedExpiry}</td>
+            <td class="${statusHighlight(row.estado_extintor)}">${escapeHTML(row.estado_extintor || '')}</td>
+            <td class="${statusHighlight(row.estado_certificacion)}">${escapeHTML(row.estado_certificacion || '')}</td>
+            <td class="${statusHighlight(row.estado_sonda)}">${escapeHTML(row.estado_sonda || '')}</td>
+            <td class="${statusHighlight(row.estado_manometro)}">${escapeHTML(row.estado_manometro || '')}</td>
+            <td class="${statusHighlight(row.presion_carga)}">${escapeHTML(row.presion_carga || '')}</td>
+            <td class="${statusHighlight(row.cilindro_estado)}">${escapeHTML(row.cilindro_estado || '')}</td>
+            <td class="${statusHighlight(row.estado_porta_extintor)}">${escapeHTML(row.estado_porta_extintor || '')}</td>
+          </tr>`;
+        }).join('');
+      } else {
+        extinguisherTableBody.innerHTML = '<tr><td colspan="11" class="text-center">No hay datos disponibles</td></tr>';
+      }
+    }
+  } catch (error) {
+    hideLoader();
+    console.error('Error refreshing extinguisher report:', error);
+    showNotification('error', 'Error', 'No se pudo cargar el informe de extintores');
   }
 }
 
@@ -7776,6 +8208,39 @@ function setupFilters() {
     refreshTagReport();
   });
   
+  // Extinguisher report filters
+  document.getElementById('applyExtinguisherFilters')?.addEventListener('click', () => {
+    const filters = {
+      terminal: document.getElementById('extinguisherTerminalFilter')?.value || '',
+      extinguisherStatus: document.getElementById('extinguisherStatusFilter')?.value || '',
+      certificationStatus: document.getElementById('extinguisherCertificationFilter')?.value || '',
+      pressureStatus: document.getElementById('extinguisherPressureFilter')?.value || '',
+      holderStatus: document.getElementById('extinguisherHolderFilter')?.value || ''
+    };
+    
+    APP_STATE.filters.extinguishers = filters;
+    refreshExtinguisherReport(filters);
+  });
+  
+  document.getElementById('resetExtinguisherFilters')?.addEventListener('click', () => {
+    const filterElements = {
+      terminal: document.getElementById('extinguisherTerminalFilter'),
+      extinguisherStatus: document.getElementById('extinguisherStatusFilter'),
+      certificationStatus: document.getElementById('extinguisherCertificationFilter'),
+      pressureStatus: document.getElementById('extinguisherPressureFilter'),
+      holderStatus: document.getElementById('extinguisherHolderFilter')
+    };
+    
+    if (filterElements.terminal) filterElements.terminal.value = '';
+    if (filterElements.extinguisherStatus) filterElements.extinguisherStatus.value = '';
+    if (filterElements.certificationStatus) filterElements.certificationStatus.value = '';
+    if (filterElements.pressureStatus) filterElements.pressureStatus.value = '';
+    if (filterElements.holderStatus) filterElements.holderStatus.value = '';
+    
+    APP_STATE.filters.extinguishers = {};
+    refreshExtinguisherReport();
+  });
+  
   // Mobileye report filters
   document.getElementById('applyMobileyeFilters')?.addEventListener('click', () => {
     const filters = {
@@ -8468,6 +8933,12 @@ document.addEventListener('DOMContentLoaded', () => {
     exportTableToXLSX('Informe_TAG_' + APP_STATE.session.week, 
                      ['#', 'PPU', 'TAG', 'SERIE TAG', 'OBSERVACIONES'], 
                      'tagTable');
+  });
+  
+  document.getElementById('btnExportExtinguishers')?.addEventListener('click', () => {
+    exportTableToXLSX('Informe_Extintores_' + APP_STATE.session.week, 
+                     ['#', 'PPU', 'UBICACIÓN', 'FECHA VENCIMIENTO', 'ESTADO EXTINTOR', 'ESTADO CERTIFICACIÓN', 'ESTADO SONDA', 'ESTADO MANÓMETRO', 'PRESIÓN / CARGA', 'CILINDRO', 'ESTADO PORTA EXTINTOR'], 
+                     'extinguisherTable');
   });
   
   document.getElementById('btnExportMobileye')?.addEventListener('click', () => {
