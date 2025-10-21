@@ -2506,6 +2506,11 @@ textarea.form-control {
             <span>Odómetro</span>
             <span class="badge badge-light" id="odoCount">0</span>
           </div>
+          <div class="nav-item" data-section="advertising-report">
+            <i class="fas fa-ad"></i>
+            <span>Publicidad</span>
+            <span class="badge badge-light" id="advertisingCount">0</span>
+          </div>
         </div>
         
         <div class="sidebar-section">
@@ -3193,6 +3198,110 @@ textarea.form-control {
                 </div>
               </div>
               
+              <div class="toggle-section" id="toggleAdvertising">
+                <div class="toggle-section-title">
+                  <div class="section-icon">
+                    <i class="fas fa-ad"></i>
+                  </div>
+                  <span>Publicidad</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+              </div>
+              
+              <div class="toggle-section-content" id="advertisingSection">
+                <div class="form-grid">
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Publicidad Izquierda</label>
+                    <select class="form-control" id="publicityLeftStatus">
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="TIENE">TIENE</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle Publicidad Izquierda</label>
+                    <input type="text" class="form-control" id="publicityLeftDetail" placeholder="Especificar la publicidad instalada">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Daño por Retiro (Izquierda)</label>
+                    <select class="form-control" id="publicityLeftDamage">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle del Daño (Izquierda)</label>
+                    <input type="text" class="form-control" id="publicityLeftDamageDetail" placeholder="Describe el daño por retiro si aplica">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Residuos de Pegamento (Izquierda)</label>
+                    <select class="form-control" id="publicityLeftResidue">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Publicidad Derecha</label>
+                    <select class="form-control" id="publicityRightStatus">
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="TIENE">TIENE</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle Publicidad Derecha</label>
+                    <input type="text" class="form-control" id="publicityRightDetail" placeholder="Especificar la publicidad instalada">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Daño por Retiro (Derecha)</label>
+                    <select class="form-control" id="publicityRightDamage">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle del Daño (Derecha)</label>
+                    <input type="text" class="form-control" id="publicityRightDamageDetail" placeholder="Describe el daño por retiro si aplica">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Residuos de Pegamento (Derecha)</label>
+                    <select class="form-control" id="publicityRightResidue">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                  
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Publicidad Luneta</label>
+                    <select class="form-control" id="publicityRearStatus">
+                      <option value="NO TIENE">NO TIENE</option>
+                      <option value="TIENE">TIENE</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle Publicidad Luneta</label>
+                    <input type="text" class="form-control" id="publicityRearDetail" placeholder="Especificar la publicidad instalada">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Daño por Retiro (Luneta)</label>
+                    <select class="form-control" id="publicityRearDamage">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-8 form-group">
+                    <label class="form-label">Detalle del Daño (Luneta)</label>
+                    <input type="text" class="form-control" id="publicityRearDamageDetail" placeholder="Describe el daño por retiro si aplica">
+                  </div>
+                  <div class="col-12 col-md-4 form-group">
+                    <label class="form-label">Residuos de Pegamento (Luneta)</label>
+                    <select class="form-control" id="publicityRearResidue">
+                      <option value="NO">NO</option>
+                      <option value="SI">SI</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
               <div class="toggle-section" id="toggleSummary">
                 <div class="toggle-section-title">
                   <div class="section-icon">
@@ -3823,6 +3932,87 @@ textarea.form-control {
                     <th>Tickets</th>
                     <th>Evaluación</th>
                     <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- INFORME DE PUBLICIDAD -->
+        <section id="section-advertising-report" class="hidden">
+          <div class="card scaleIn">
+            <div class="card-header flex-wrap">
+              <h3 class="card-title">Informe de Publicidad</h3>
+              <div class="d-flex align-center gap-3 flex-wrap">
+                <span class="chip">Registros: <strong id="advertisingReportCount">0</strong></span>
+                <button class="btn btn-primary btn-sm" id="btnExportAdvertising">
+                  <i class="fas fa-file-excel"></i> Exportar .XLSX
+                </button>
+              </div>
+            </div>
+            
+            <div class="filters-container" id="advertisingFilterContainer">
+              <div class="filter-title">
+                <i class="fas fa-filter text-primary"></i>
+                <h5>Filtros</h5>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Terminal</label>
+                <select class="form-control" id="advertisingTerminalFilter">
+                  <option value="">Todos</option>
+                  <option>El Roble</option>
+                  <option>La Reina</option>
+                  <option>Maria Angelica</option>
+                  <option>El Descanso</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Ubicación</label>
+                <select class="form-control" id="advertisingSideFilter">
+                  <option value="">Todas</option>
+                  <option value="Izquierda">Izquierda</option>
+                  <option value="Derecha">Derecha</option>
+                  <option value="Luneta">Luneta</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Condición</label>
+                <select class="form-control" id="advertisingIssueFilter">
+                  <option value="">Todas</option>
+                  <option value="con-dano">Con daño por retiro</option>
+                  <option value="con-residuos">Con residuos de pegamento</option>
+                  <option value="sin-issues">Sin incidencias</option>
+                </select>
+              </div>
+              
+              <div class="filter-actions">
+                <button class="btn btn-light btn-sm" id="resetAdvertisingFilters">
+                  <i class="fas fa-redo"></i> Restablecer
+                </button>
+                <button class="btn btn-primary btn-sm" id="applyAdvertisingFilters">
+                  <i class="fas fa-check"></i> Aplicar
+                </button>
+              </div>
+            </div>
+            
+            <div class="table-container">
+              <table class="table" id="advertisingTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>PPU</th>
+                    <th>Terminal</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                    <th>Publicidad</th>
+                    <th>Daño por retiro</th>
+                    <th>Residuos</th>
+                    <th>Observaciones</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -4494,6 +4684,7 @@ const APP_STATE = {
     sessions: {},
     mobileye: {},
     odometer: {},
+    advertising: {},
     tickets: {},
     fleet: {}
   },
@@ -5246,6 +5437,133 @@ function getSessionEvaluation(row) {
 }
 
 
+/**
+ * Extracts bus entries from a stored session log payload.
+ * Handles JSON strings, indexed objects and single objects as fallbacks.
+ * @param {*} rawBuses - Raw buses payload from database
+ * @returns {Array<Object>} Normalized array of bus entries
+ */
+function extractSessionBusEntries(rawBuses) {
+  if (!rawBuses) return [];
+  
+  if (Array.isArray(rawBuses)) {
+    return rawBuses.filter(entry => entry && typeof entry === 'object');
+  }
+  
+  if (typeof rawBuses === 'string') {
+    const trimmed = rawBuses.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      return extractSessionBusEntries(parsed);
+    } catch (error) {
+      console.debug('No se pudo parsear la lista de buses de la sesión:', error);
+      return [];
+    }
+  }
+  
+  if (typeof rawBuses === 'object') {
+    if (rawBuses.bus_ppu || rawBuses.ppu || rawBuses.inspection_id) {
+      return [rawBuses];
+    }
+    
+    const values = Object.values(rawBuses);
+    if (values.length > 0 && values.every(value => value && typeof value === 'object')) {
+      return extractSessionBusEntries(values);
+    }
+  }
+  
+  return [];
+}
+
+/**
+ * Normalises a database row from revision_semanal_ingresos ensuring
+ * bus and ticket counts are consistent even if the numeric columns were not updated.
+ * @param {Object} row - Raw database row
+ * @returns {Object} Normalized row
+ */
+function normalizeSessionLogRow(row = {}) {
+  const normalized = { ...row };
+  const inspector = normalizeInspectorName(row.inspector || '');
+  normalized.inspector = inspector;
+  normalized.terminal = (row.terminal || '').trim();
+  
+  const buses = extractSessionBusEntries(row.buses);
+  const normalizedBuses = buses
+    .map(entry => {
+      if (!entry || typeof entry !== 'object') return null;
+      
+      const busEntry = { ...entry };
+      busEntry.bus_ppu = busEntry.bus_ppu || busEntry.ppu || busEntry.bus || '';
+      busEntry.terminal = busEntry.terminal || normalized.terminal || entry?.terminal || '';
+      busEntry.estado = busEntry.estado || busEntry.status || 'OK';
+      
+      const rawTickets = entry.tickets ?? entry.ticketList ?? entry.ticket_count ?? entry.ticketCount;
+      let tickets = [];
+      let ticketCount = 0;
+      
+      if (Array.isArray(rawTickets)) {
+        tickets = rawTickets.filter(ticket => ticket && typeof ticket === 'object');
+        ticketCount = tickets.length;
+      } else if (typeof rawTickets === 'string') {
+        const trimmedTickets = rawTickets.trim();
+        if (trimmedTickets) {
+          try {
+            const parsedTickets = JSON.parse(trimmedTickets);
+            if (Array.isArray(parsedTickets)) {
+              tickets = parsedTickets.filter(ticket => ticket && typeof ticket === 'object');
+              ticketCount = tickets.length;
+            } else if (parsedTickets && typeof parsedTickets === 'object') {
+              tickets = [parsedTickets];
+              ticketCount = 1;
+            }
+          } catch (error) {
+            console.debug('No se pudo parsear la lista de tickets de la sesión:', error);
+          }
+        }
+      } else if (typeof rawTickets === 'number') {
+        ticketCount = Number.isFinite(rawTickets) && rawTickets > 0 ? rawTickets : 0;
+      } else if (rawTickets && typeof rawTickets === 'object') {
+        tickets = [rawTickets];
+        ticketCount = 1;
+      }
+      
+      if (ticketCount === 0) {
+        const altCount = Number(entry.ticket_count ?? entry.ticketCount);
+        if (Number.isFinite(altCount) && altCount > 0) {
+          ticketCount = altCount;
+        }
+      }
+      
+      busEntry.tickets = tickets;
+      busEntry.ticket_count = ticketCount;
+      
+      return busEntry;
+    })
+    .filter(Boolean);
+  
+  const computedBusCount = normalizedBuses.length;
+  const computedTicketCount = normalizedBuses.reduce(
+    (sum, busEntry) => sum + (Number(busEntry.ticket_count) || 0),
+    0
+  );
+  
+  const rawBusCount = Number(row.bus_count);
+  const rawTicketCount = Number(row.ticket_count);
+  
+  normalized.bus_count = Number.isFinite(rawBusCount) && rawBusCount > 0
+    ? rawBusCount
+    : computedBusCount;
+  
+  normalized.ticket_count = Number.isFinite(rawTicketCount) && rawTicketCount > 0
+    ? rawTicketCount
+    : computedTicketCount;
+  
+  normalized.buses = normalizedBuses;
+  return normalized;
+}
+
+
 function escapeHTML(unsafe) {
   if (unsafe === null || unsafe === undefined) return '';
   const value = typeof unsafe === 'string' ? unsafe : String(unsafe);
@@ -5369,6 +5687,7 @@ function showSection(sectionId) {
     'extinguisher-report': document.getElementById('section-extinguisher-report'),
     'mobileye-report': document.getElementById('section-mobileye-report'),
     'odometer-report': document.getElementById('section-odometer-report'),
+    'advertising-report': document.getElementById('section-advertising-report'),
     'maintenance-tickets': document.getElementById('section-maintenance-tickets'),
     'session-report': document.getElementById('section-session-report'),
     'fleet-status': document.getElementById('section-fleet-status'),
@@ -5455,6 +5774,9 @@ function loadSectionData(sectionId) {
       break;
     case 'odometer-report':
       refreshOdometerReport();
+      break;
+    case 'advertising-report':
+      refreshAdvertisingReport(APP_STATE.filters.advertising || {});
       break;
     case 'user-settings':
       loadUserSettings();
@@ -6056,11 +6378,42 @@ async function loadInspectionSections(inspectionId) {
       .maybeSingle();
     
     if (odometerData) {
-      if (formInputs.odometerReading) formInputs.odometerReading.value = odometerData.lectura_km || '';
-      if (formInputs.odometerStatus) formInputs.odometerStatus.value = odometerData.estado_odometro || 'funcionando';
-      if (formInputs.odometerObservations) formInputs.odometerObservations.value = odometerData.observacion || '';
-    }
+    if (formInputs.odometerReading) formInputs.odometerReading.value = odometerData.lectura_km || '';
+    if (formInputs.odometerStatus) formInputs.odometerStatus.value = odometerData.estado_odometro || 'funcionando';
+    if (formInputs.odometerObservations) formInputs.odometerObservations.value = odometerData.observacion || '';
+  }
+  
+  // 6. Load advertising data
+  const { data: advertisingData, error: advertisingError } = await supabase
+    .from('revision_semanal_publicidad_inspeccion')
+    .select('*')
+    .eq('inspeccion_id', inspectionId)
+    .maybeSingle();
+  
+  if (advertisingError && advertisingError.code !== 'PGRST116') {
+    console.error('Error cargando sección de publicidad:', advertisingError);
+  }
+  
+  if (advertisingData) {
+    if (formInputs.publicityLeftStatus) formInputs.publicityLeftStatus.value = advertisingData.publicidad_izquierda_estado || 'NO TIENE';
+    if (formInputs.publicityLeftDetail) formInputs.publicityLeftDetail.value = advertisingData.publicidad_izquierda_detalle || '';
+    if (formInputs.publicityLeftDamage) formInputs.publicityLeftDamage.value = advertisingData.publicidad_izquierda_danio || 'NO';
+    if (formInputs.publicityLeftDamageDetail) formInputs.publicityLeftDamageDetail.value = advertisingData.publicidad_izquierda_danio_detalle || '';
+    if (formInputs.publicityLeftResidue) formInputs.publicityLeftResidue.value = advertisingData.publicidad_izquierda_residuos || 'NO';
     
+    if (formInputs.publicityRightStatus) formInputs.publicityRightStatus.value = advertisingData.publicidad_derecha_estado || 'NO TIENE';
+    if (formInputs.publicityRightDetail) formInputs.publicityRightDetail.value = advertisingData.publicidad_derecha_detalle || '';
+    if (formInputs.publicityRightDamage) formInputs.publicityRightDamage.value = advertisingData.publicidad_derecha_danio || 'NO';
+    if (formInputs.publicityRightDamageDetail) formInputs.publicityRightDamageDetail.value = advertisingData.publicidad_derecha_danio_detalle || '';
+    if (formInputs.publicityRightResidue) formInputs.publicityRightResidue.value = advertisingData.publicidad_derecha_residuos || 'NO';
+    
+    if (formInputs.publicityRearStatus) formInputs.publicityRearStatus.value = advertisingData.publicidad_luneta_estado || 'NO TIENE';
+    if (formInputs.publicityRearDetail) formInputs.publicityRearDetail.value = advertisingData.publicidad_luneta_detalle || '';
+    if (formInputs.publicityRearDamage) formInputs.publicityRearDamage.value = advertisingData.publicidad_luneta_danio || 'NO';
+    if (formInputs.publicityRearDamageDetail) formInputs.publicityRearDamageDetail.value = advertisingData.publicidad_luneta_danio_detalle || '';
+    if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = advertisingData.publicidad_luneta_residuos || 'NO';
+  }
+  
     clearTimeout(loaderId);
     hideLoader();
     return true;
@@ -6143,6 +6496,23 @@ function getFormInputs() {
     odometerStatus: document.getElementById('odometerStatus'),
     odometerObservations: document.getElementById('odometerObservations'),
     
+    // Advertising section
+    publicityLeftStatus: document.getElementById('publicityLeftStatus'),
+    publicityLeftDetail: document.getElementById('publicityLeftDetail'),
+    publicityLeftDamage: document.getElementById('publicityLeftDamage'),
+    publicityLeftDamageDetail: document.getElementById('publicityLeftDamageDetail'),
+    publicityLeftResidue: document.getElementById('publicityLeftResidue'),
+    publicityRightStatus: document.getElementById('publicityRightStatus'),
+    publicityRightDetail: document.getElementById('publicityRightDetail'),
+    publicityRightDamage: document.getElementById('publicityRightDamage'),
+    publicityRightDamageDetail: document.getElementById('publicityRightDamageDetail'),
+    publicityRightResidue: document.getElementById('publicityRightResidue'),
+    publicityRearStatus: document.getElementById('publicityRearStatus'),
+    publicityRearDetail: document.getElementById('publicityRearDetail'),
+    publicityRearDamage: document.getElementById('publicityRearDamage'),
+    publicityRearDamageDetail: document.getElementById('publicityRearDamageDetail'),
+    publicityRearResidue: document.getElementById('publicityRearResidue'),
+    
     // Summary section
     globalStatus: document.getElementById('globalStatus'),
     generalObservations: document.getElementById('generalObservations'),
@@ -6200,6 +6570,24 @@ function clearForm() {
   if (formInputs.odometerReading) formInputs.odometerReading.value = '';
   if (formInputs.odometerStatus) formInputs.odometerStatus.value = 'funcionando';
   if (formInputs.odometerObservations) formInputs.odometerObservations.value = '';
+  
+  if (formInputs.publicityLeftStatus) formInputs.publicityLeftStatus.value = 'NO TIENE';
+  if (formInputs.publicityLeftDetail) formInputs.publicityLeftDetail.value = '';
+  if (formInputs.publicityLeftDamage) formInputs.publicityLeftDamage.value = 'NO';
+  if (formInputs.publicityLeftDamageDetail) formInputs.publicityLeftDamageDetail.value = '';
+  if (formInputs.publicityLeftResidue) formInputs.publicityLeftResidue.value = 'NO';
+  
+  if (formInputs.publicityRightStatus) formInputs.publicityRightStatus.value = 'NO TIENE';
+  if (formInputs.publicityRightDetail) formInputs.publicityRightDetail.value = '';
+  if (formInputs.publicityRightDamage) formInputs.publicityRightDamage.value = 'NO';
+  if (formInputs.publicityRightDamageDetail) formInputs.publicityRightDamageDetail.value = '';
+  if (formInputs.publicityRightResidue) formInputs.publicityRightResidue.value = 'NO';
+  
+  if (formInputs.publicityRearStatus) formInputs.publicityRearStatus.value = 'NO TIENE';
+  if (formInputs.publicityRearDetail) formInputs.publicityRearDetail.value = '';
+  if (formInputs.publicityRearDamage) formInputs.publicityRearDamage.value = 'NO';
+  if (formInputs.publicityRearDamageDetail) formInputs.publicityRearDamageDetail.value = '';
+  if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = 'NO';
   
   if (formInputs.globalStatus) formInputs.globalStatus.value = 'OK';
   if (formInputs.generalObservations) formInputs.generalObservations.value = '';
@@ -6366,6 +6754,43 @@ function evaluateCriticality() {
     status = 'Observaciones';
     issues.push(`Porta extintor: ${formInputs.holderStatus.value}`);
   }
+  
+  // Check advertising section
+  const publicitySections = [
+    {
+      label: 'Izquierda',
+      damage: formInputs.publicityLeftDamage ? formInputs.publicityLeftDamage.value : 'NO',
+      damageDetail: formInputs.publicityLeftDamageDetail ? formInputs.publicityLeftDamageDetail.value : '',
+      residue: formInputs.publicityLeftResidue ? formInputs.publicityLeftResidue.value : 'NO'
+    },
+    {
+      label: 'Derecha',
+      damage: formInputs.publicityRightDamage ? formInputs.publicityRightDamage.value : 'NO',
+      damageDetail: formInputs.publicityRightDamageDetail ? formInputs.publicityRightDamageDetail.value : '',
+      residue: formInputs.publicityRightResidue ? formInputs.publicityRightResidue.value : 'NO'
+    },
+    {
+      label: 'Luneta',
+      damage: formInputs.publicityRearDamage ? formInputs.publicityRearDamage.value : 'NO',
+      damageDetail: formInputs.publicityRearDamageDetail ? formInputs.publicityRearDamageDetail.value : '',
+      residue: formInputs.publicityRearResidue ? formInputs.publicityRearResidue.value : 'NO'
+    }
+  ];
+  
+  publicitySections.forEach(section => {
+    const issuesFound = [];
+    if (section.damage === 'SI') {
+      issuesFound.push(`daño por retiro${section.damageDetail ? ` (${section.damageDetail})` : ''}`);
+    }
+    if (section.residue === 'SI') {
+      issuesFound.push('residuos de pegamento');
+    }
+    
+    if (issuesFound.length > 0) {
+      if (status === 'OK') status = 'Observaciones';
+      issues.push(`Publicidad ${section.label}: ${issuesFound.join(' y ')}`);
+    }
+  });
   
   // Check Mobileye for VOLVO buses
   if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
@@ -6556,7 +6981,32 @@ async function saveInspection() {
       throw odometerError;
     }
     
-    // 7. Generate maintenance tickets
+    // 7. Save advertising section
+    try {
+      await upsertInspectionSection('revision_semanal_publicidad_inspeccion', {
+        inspeccion_id: inspectionId,
+        publicidad_izquierda_estado: formInputs.publicityLeftStatus ? formInputs.publicityLeftStatus.value || 'NO TIENE' : 'NO TIENE',
+        publicidad_izquierda_detalle: formInputs.publicityLeftDetail ? formInputs.publicityLeftDetail.value || null : null,
+        publicidad_izquierda_danio: formInputs.publicityLeftDamage ? formInputs.publicityLeftDamage.value || 'NO' : 'NO',
+        publicidad_izquierda_danio_detalle: formInputs.publicityLeftDamageDetail ? formInputs.publicityLeftDamageDetail.value || null : null,
+        publicidad_izquierda_residuos: formInputs.publicityLeftResidue ? formInputs.publicityLeftResidue.value || 'NO' : 'NO',
+        publicidad_derecha_estado: formInputs.publicityRightStatus ? formInputs.publicityRightStatus.value || 'NO TIENE' : 'NO TIENE',
+        publicidad_derecha_detalle: formInputs.publicityRightDetail ? formInputs.publicityRightDetail.value || null : null,
+        publicidad_derecha_danio: formInputs.publicityRightDamage ? formInputs.publicityRightDamage.value || 'NO' : 'NO',
+        publicidad_derecha_danio_detalle: formInputs.publicityRightDamageDetail ? formInputs.publicityRightDamageDetail.value || null : null,
+        publicidad_derecha_residuos: formInputs.publicityRightResidue ? formInputs.publicityRightResidue.value || 'NO' : 'NO',
+        publicidad_luneta_estado: formInputs.publicityRearStatus ? formInputs.publicityRearStatus.value || 'NO TIENE' : 'NO TIENE',
+        publicidad_luneta_detalle: formInputs.publicityRearDetail ? formInputs.publicityRearDetail.value || null : null,
+        publicidad_luneta_danio: formInputs.publicityRearDamage ? formInputs.publicityRearDamage.value || 'NO' : 'NO',
+        publicidad_luneta_danio_detalle: formInputs.publicityRearDamageDetail ? formInputs.publicityRearDamageDetail.value || null : null,
+        publicidad_luneta_residuos: formInputs.publicityRearResidue ? formInputs.publicityRearResidue.value || 'NO' : 'NO'
+      });
+    } catch (advertisingError) {
+      console.error('Error guardando sección de publicidad:', advertisingError);
+      throw advertisingError;
+    }
+    
+    // 8. Generate maintenance tickets
     const createdTickets = await createMaintenanceTickets(inspectionId) || [];
     
     clearTimeout(loaderId);
@@ -6772,6 +7222,55 @@ async function createMaintenanceTickets(inspectionId) {
       }`
     });
   }
+  
+  // 6. Check advertising issues
+  const publicityTickets = [
+    {
+      label: 'Izquierda',
+      status: formInputs.publicityLeftStatus ? formInputs.publicityLeftStatus.value : 'NO TIENE',
+      detail: formInputs.publicityLeftDetail ? formInputs.publicityLeftDetail.value : '',
+      damage: formInputs.publicityLeftDamage ? formInputs.publicityLeftDamage.value : 'NO',
+      damageDetail: formInputs.publicityLeftDamageDetail ? formInputs.publicityLeftDamageDetail.value : '',
+      residue: formInputs.publicityLeftResidue ? formInputs.publicityLeftResidue.value : 'NO'
+    },
+    {
+      label: 'Derecha',
+      status: formInputs.publicityRightStatus ? formInputs.publicityRightStatus.value : 'NO TIENE',
+      detail: formInputs.publicityRightDetail ? formInputs.publicityRightDetail.value : '',
+      damage: formInputs.publicityRightDamage ? formInputs.publicityRightDamage.value : 'NO',
+      damageDetail: formInputs.publicityRightDamageDetail ? formInputs.publicityRightDamageDetail.value : '',
+      residue: formInputs.publicityRightResidue ? formInputs.publicityRightResidue.value : 'NO'
+    },
+    {
+      label: 'Luneta',
+      status: formInputs.publicityRearStatus ? formInputs.publicityRearStatus.value : 'NO TIENE',
+      detail: formInputs.publicityRearDetail ? formInputs.publicityRearDetail.value : '',
+      damage: formInputs.publicityRearDamage ? formInputs.publicityRearDamage.value : 'NO',
+      damageDetail: formInputs.publicityRearDamageDetail ? formInputs.publicityRearDamageDetail.value : '',
+      residue: formInputs.publicityRearResidue ? formInputs.publicityRearResidue.value : 'NO'
+    }
+  ];
+  
+  publicityTickets.forEach(section => {
+    const issues = [];
+    if (section.damage === 'SI') {
+      issues.push(`daño por retiro${section.damageDetail ? `: ${section.damageDetail}` : ''}`);
+    }
+    if (section.residue === 'SI') {
+      issues.push('residuos de pegamento');
+    }
+    
+    if (issues.length > 0) {
+      const detailText = section.detail ? `Publicidad: ${section.detail}. ` : '';
+      const statusText = section.status ? `Estado: ${section.status}. ` : '';
+      const ppuText = APP_STATE.currentBus?.ppu ? `PPU ${APP_STATE.currentBus.ppu}. ` : '';
+      tickets.push({
+        origin: 'advertising',
+        component: `Publicidad ${section.label}`,
+        description: `${ppuText}${detailText}${statusText}${issues.join(' · ')}`
+      });
+    }
+  });
   
   // Create tickets in database
   for (const ticket of tickets) {
@@ -6989,7 +7488,8 @@ async function refreshReportTables() {
       refreshExtinguisherReport(),
       refreshSessionReport(),
       refreshMobileyeReport(),
-      refreshOdometerReport()
+      refreshOdometerReport(),
+      refreshAdvertisingReport(APP_STATE.filters.advertising || {})
     ]);
   } catch (error) {
     console.error('Error refreshing report tables:', error);
@@ -7391,7 +7891,7 @@ async function refreshSessionReport(filters = {}) {
       return result;
     };
     
-    const sessions = rows || [];
+    const sessions = (rows || []).map(normalizeSessionLogRow);
     const sessionsDeduped = deduplicateSessionsByInspectorHour(sessions);
     APP_STATE.sessionReportRows = sessionsDeduped;
     
@@ -7534,14 +8034,19 @@ function openSessionDetail(index) {
   if (tableBody) {
     if (busEntries.length > 0) {
       tableBody.innerHTML = busEntries.map((bus, indexBus) => {
-        const tickets = Array.isArray(bus.tickets) ? bus.tickets.length : 0;
+        const ticketEntries = Array.isArray(bus.tickets)
+          ? bus.tickets.filter(ticket => ticket && typeof ticket === 'object')
+          : [];
+        const ticketCount = ticketEntries.length > 0
+          ? ticketEntries.length
+          : Math.max(Number(bus.ticket_count) || 0, 0);
         return `<tr>
           <td>${indexBus + 1}</td>
           <td>${escapeHTML(bus.bus_ppu || '—')}</td>
           <td>${escapeHTML(bus.terminal || '—')}</td>
           <td>${formatDateTime(bus.fecha)}</td>
           <td>${escapeHTML(bus.estado || '—')}</td>
-          <td>${tickets}</td>
+          <td>${ticketCount}</td>
         </tr>`;
       }).join('');
     } else {
@@ -7552,10 +8057,21 @@ function openSessionDetail(index) {
   if (findingsList) {
     const findings = [];
     busEntries.forEach(bus => {
-      const tickets = Array.isArray(bus.tickets) ? bus.tickets : [];
-      tickets.forEach(ticket => {
+      const ticketEntries = Array.isArray(bus.tickets)
+        ? bus.tickets.filter(ticket => ticket && typeof ticket === 'object')
+        : [];
+      const totalTickets = ticketEntries.length > 0
+        ? ticketEntries.length
+        : Math.max(Number(bus.ticket_count) || 0, 0);
+      
+      ticketEntries.forEach(ticket => {
         findings.push(`<li><strong>${escapeHTML(bus.bus_ppu || 'Bus')}</strong> — ${escapeHTML(ticket.componente || 'Componente')} · ${escapeHTML(ticket.descripcion || ticket.descripcion_falla || 'Hallazgo')}</li>`);
       });
+      
+      if (ticketEntries.length === 0 && totalTickets > 0) {
+        const label = totalTickets === 1 ? 'ticket' : 'tickets';
+        findings.push(`<li><strong>${escapeHTML(bus.bus_ppu || 'Bus')}</strong> — ${totalTickets} ${label} registrados (detalle no disponible)</li>`);
+      }
     });
     
     findingsList.innerHTML = findings.length > 0
@@ -7757,6 +8273,161 @@ async function refreshOdometerReport(filters = {}) {
     hideLoader();
     console.error('Error refreshing odometer report:', error);
     showNotification('error', 'Error', 'No se pudo cargar el informe de odómetro');
+  }
+}
+
+
+/**
+ * Refreshes the advertising report table
+ * @param {Object} filters - Filter criteria
+ */
+async function refreshAdvertisingReport(filters = {}) {
+  const activeFilters = Object.keys(filters || {}).length > 0
+    ? filters
+    : (APP_STATE.filters.advertising || {});
+  
+  const loaderId = showLoader('Cargando informe de publicidad...');
+  
+  try {
+    let advertisingQuery = supabase
+      .from('revision_semanal_publicidad_inspeccion')
+      .select(`
+        *,
+        inspeccion:revision_semanal_inspecciones!inner(
+          bus_id,
+          semana_iso,
+          terminal,
+          bus:revision_semanal_buses!inner(
+            ppu,
+            asignacion,
+            modelo_chasis,
+            marca,
+            anio,
+            terminal
+          )
+        )
+      `)
+      .eq('inspeccion.semana_iso', APP_STATE.session.week);
+    
+    if (activeFilters.terminal) {
+      advertisingQuery = advertisingQuery.eq('inspeccion.terminal', activeFilters.terminal);
+    }
+    
+    const { data: advertisingRows, error } = await advertisingQuery;
+    if (error) throw error;
+    
+    const entryRows = [];
+    const sides = [
+      { key: 'izquierda', label: 'Izquierda' },
+      { key: 'derecha', label: 'Derecha' },
+      { key: 'luneta', label: 'Luneta' }
+    ];
+    
+    (advertisingRows || []).forEach(row => {
+      const bus = row.inspeccion?.bus || {};
+      const terminal = row.inspeccion?.terminal || bus.terminal || '';
+      sides.forEach(side => {
+        const estado = row[`publicidad_${side.key}_estado`] || 'NO TIENE';
+        const detalle = row[`publicidad_${side.key}_detalle`] || '';
+        const danio = row[`publicidad_${side.key}_danio`] || 'NO';
+        const danioDetalle = row[`publicidad_${side.key}_danio_detalle`] || '';
+        const residuos = row[`publicidad_${side.key}_residuos`] || 'NO';
+        
+        entryRows.push({
+          ppu: bus.ppu || '—',
+          terminal,
+          side: side.label,
+          state: estado,
+          detail: detalle,
+          damage: danio,
+          damageDetail: danioDetalle,
+          residue: residuos
+        });
+      });
+    });
+    
+    let filteredRows = entryRows.slice();
+    
+    if (activeFilters.side) {
+      filteredRows = filteredRows.filter(row => row.side === activeFilters.side);
+    }
+    
+    if (activeFilters.issue) {
+      filteredRows = filteredRows.filter(row => {
+        if (activeFilters.issue === 'con-dano') return row.damage === 'SI';
+        if (activeFilters.issue === 'con-residuos') return row.residue === 'SI';
+        if (activeFilters.issue === 'sin-issues') return row.damage !== 'SI' && row.residue !== 'SI';
+        return true;
+      });
+    }
+    
+    filteredRows.sort((a, b) => {
+      const ppuA = (a.ppu || '').toUpperCase();
+      const ppuB = (b.ppu || '').toUpperCase();
+      if (ppuA !== ppuB) return ppuA.localeCompare(ppuB);
+      return a.side.localeCompare(b.side);
+    });
+    
+    const totalCount = filteredRows.length;
+    
+    const reportCount = document.getElementById('advertisingReportCount');
+    const badgeCount = document.getElementById('advertisingCount');
+    
+    if (reportCount) reportCount.textContent = totalCount.toString();
+    if (badgeCount) badgeCount.textContent = totalCount.toString();
+    
+    const tableBody = document.querySelector('#advertisingTable tbody');
+    
+    if (tableBody) {
+      if (filteredRows.length > 0) {
+        tableBody.innerHTML = filteredRows.map((row, index) => {
+          const damageClass = row.damage === 'SI' ? 'text-danger fw-bold' : '';
+          const residueClass = row.residue === 'SI' ? 'text-warning fw-medium' : '';
+          const observations = [
+            row.detail ? `Publicidad: ${row.detail}` : '',
+            row.damage === 'SI' && row.damageDetail ? `Daño: ${row.damageDetail}` : ''
+          ].filter(Boolean).join(' · ') || '—';
+          
+          return `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHTML(row.ppu)}</td>
+            <td>${escapeHTML(row.terminal)}</td>
+            <td>${escapeHTML(row.side)}</td>
+            <td>${escapeHTML(row.state)}</td>
+            <td>${escapeHTML(row.detail || '—')}</td>
+            <td class="${damageClass}">${row.damage === 'SI' ? 'Sí' : 'No'}</td>
+            <td class="${residueClass}">${row.residue === 'SI' ? 'Sí' : 'No'}</td>
+            <td>${escapeHTML(observations)}</td>
+          </tr>`;
+        }).join('');
+      } else {
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No hay datos disponibles para los filtros seleccionados.</td></tr>';
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing advertising report:', error);
+    let errorMessage = 'No se pudo cargar el informe de publicidad';
+    if (error?.code === '42P01') {
+      errorMessage = 'La tabla "revision_semanal_publicidad_inspeccion" no existe. Crea la tabla para habilitar el informe de publicidad.';
+    } else if (error?.code === '42501') {
+      errorMessage = 'Permisos insuficientes para leer "revision_semanal_publicidad_inspeccion". Revisa las políticas de seguridad.';
+    } else if (error?.message) {
+      errorMessage = `${errorMessage}. Detalle: ${error.message}`;
+    }
+    showNotification('error', 'Error', errorMessage);
+    
+    const reportCount = document.getElementById('advertisingReportCount');
+    const badgeCount = document.getElementById('advertisingCount');
+    if (reportCount) reportCount.textContent = '0';
+    if (badgeCount) badgeCount.textContent = '0';
+    
+    const tableBody = document.querySelector('#advertisingTable tbody');
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${escapeHTML(errorMessage)}</td></tr>`;
+    }
+  } finally {
+    clearTimeout(loaderId);
+    hideLoader();
   }
 }
 
@@ -9348,6 +10019,33 @@ function setupFilters() {
     refreshMobileyeReport();
   });
   
+  // Advertising report filters
+  document.getElementById('applyAdvertisingFilters')?.addEventListener('click', () => {
+    const filters = {
+      terminal: document.getElementById('advertisingTerminalFilter')?.value || '',
+      side: document.getElementById('advertisingSideFilter')?.value || '',
+      issue: document.getElementById('advertisingIssueFilter')?.value || ''
+    };
+    
+    APP_STATE.filters.advertising = filters;
+    refreshAdvertisingReport(filters);
+  });
+  
+  document.getElementById('resetAdvertisingFilters')?.addEventListener('click', () => {
+    const filterElements = {
+      terminal: document.getElementById('advertisingTerminalFilter'),
+      side: document.getElementById('advertisingSideFilter'),
+      issue: document.getElementById('advertisingIssueFilter')
+    };
+    
+    if (filterElements.terminal) filterElements.terminal.value = '';
+    if (filterElements.side) filterElements.side.value = '';
+    if (filterElements.issue) filterElements.issue.value = '';
+    
+    APP_STATE.filters.advertising = {};
+    refreshAdvertisingReport({});
+  });
+  
   // Odometer report filters
   document.getElementById('applyOdometerFilters')?.addEventListener('click', () => {
     const filters = {
@@ -9554,6 +10252,10 @@ function initializeApp() {
       'odometer': {
         toggle: document.getElementById('toggleOdometer'),
         content: document.getElementById('odometerSection')
+      },
+      'advertising': {
+        toggle: document.getElementById('toggleAdvertising'),
+        content: document.getElementById('advertisingSection')
       },
       'summary': {
         toggle: document.getElementById('toggleSummary'),
@@ -10047,6 +10749,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      ['#', 'PPU', 'TERMINAL', 'ASIGNACIÓN', 'MODELO CHASIS', 'MARCA', 'AÑO', 
                       'LECTURA ODÓMETRO (KM)', 'ESTADO ODÓMETRO', 'OBSERVACIONES'], 
                      'odometerTable');
+  });
+  
+  document.getElementById('btnExportAdvertising')?.addEventListener('click', () => {
+    exportTableToXLSX('Informe_Publicidad_' + APP_STATE.session.week,
+                     ['#', 'PPU', 'TERMINAL', 'UBICACIÓN', 'ESTADO', 'PUBLICIDAD', 'DAÑO POR RETIRO', 'RESIDUOS', 'OBSERVACIONES'],
+                     'advertisingTable');
   });
   
   document.getElementById('btnExportTickets')?.addEventListener('click', () => {
