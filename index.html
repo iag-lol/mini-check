@@ -9,10 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-/*! Bus Inspection System - Enterprise Edition v2.0
- * Responsive & Professional CSS Framework
- * Mobile-first approach with advanced responsive techniques
- */
 
 :root {
   /* Core Brand Colors */
@@ -2847,7 +2843,7 @@ textarea.form-control {
                   </div>
                   
                   <div class="col-3 col-sm-12 form-group">
-                    <label class="form-label">Cámara Delantera</label>
+                    <label class="form-label">Cámara Delantera (estado fisico)</label>
                     <select class="form-control" id="frontCamera">
                       <option>tiene</option>
                       <option>no tiene</option>
@@ -2856,7 +2852,7 @@ textarea.form-control {
                   </div>
                   
                   <div class="col-3 col-sm-12 form-group">
-                    <label class="form-label">Cámara de Cabina</label>
+                    <label class="form-label">Cámara de Cabina (estado fisico)</label>
                     <select class="form-control" id="cabinCamera">
                       <option>tiene</option>
                       <option>no tiene</option>
@@ -2865,7 +2861,7 @@ textarea.form-control {
                   </div>
                   
                   <div class="col-3 col-sm-12 form-group">
-                    <label class="form-label">Cámaras Interiores</label>
+                    <label class="form-label">Cámaras Interiores (estado fisico)</label>
                     <select class="form-control" id="interiorCamera">
                       <option>tiene</option>
                       <option>no tiene</option>
@@ -2874,7 +2870,7 @@ textarea.form-control {
                   </div>
                   
                   <div class="col-3 col-sm-12 form-group">
-                    <label class="form-label">Cámara Trasera</label>
+                    <label class="form-label">Cámara Trasera (estado fisico)</label>
                     <select class="form-control" id="rearCamera">
                       <option>tiene</option>
                       <option>no tiene</option>
@@ -3790,6 +3786,7 @@ textarea.form-control {
                   <option>Extintor</option>
                   <option>Mobileye</option>
                   <option>Odómetro</option>
+                  <option>Publicidad</option>
                   <option>Otro</option>
                 </select>
               </div>
@@ -4004,13 +4001,27 @@ textarea.form-control {
               <table class="table" id="advertisingTable">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>PPU</th>
-                    <th>Terminal</th>
-                    <th>Ubicación</th>
+                    <th rowspan="2">#</th>
+                    <th rowspan="2">PPU</th>
+                    <th rowspan="2">Terminal</th>
+                    <th colspan="5" class="text-center">Publicidad Izquierda</th>
+                    <th colspan="5" class="text-center">Publicidad Derecha</th>
+                    <th colspan="5" class="text-center">Publicidad Luneta</th>
+                  </tr>
+                  <tr>
                     <th>Estado</th>
                     <th>Publicidad</th>
-                    <th>Daño por retiro</th>
+                    <th>Daño</th>
+                    <th>Residuos</th>
+                    <th>Observaciones</th>
+                    <th>Estado</th>
+                    <th>Publicidad</th>
+                    <th>Daño</th>
+                    <th>Residuos</th>
+                    <th>Observaciones</th>
+                    <th>Estado</th>
+                    <th>Publicidad</th>
+                    <th>Daño</th>
                     <th>Residuos</th>
                     <th>Observaciones</th>
                   </tr>
@@ -4814,6 +4825,18 @@ function normalizeInspectorName(name) {
 }
 
 /**
+ * Generates a normalized key for inspector names (lowercase, sin acentos)
+ * @param {string} name - Inspector name
+ * @returns {string}
+ */
+function normalizeInspectorKey(name) {
+  return normalizeInspectorName(name)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/**
  * Inserts or updates an inspection section ensuring a single row per inspeccion_id
  * @param {string} table - Supabase table name
  * @param {Object} payload - Row data including inspeccion_id
@@ -5397,41 +5420,41 @@ function getSessionEvaluation(row) {
   
   const ratio = ticketCount / busCount;
   
-  if (ratio <= 0.1) {
+  if (ratio < 0.05) {
     return {
-      label: 'Sobresaliente',
-      className: 'text-success fw-bold',
-      note: 'Excelente control preventivo; mínimos hallazgos derivados en tickets.',
-      score: 'A',
+      label: 'Baja detección',
+      className: 'text-danger fw-bold',
+      note: 'Se registran muy pocos hallazgos. Revisar a fondo los criterios y profundidad de la inspección.',
+      score: 'D',
       ratio
     };
   }
   
-  if (ratio <= 0.25) {
+  if (ratio < 0.15) {
     return {
-      label: 'Bueno',
-      className: 'text-primary fw-bold',
-      note: 'Buen desempeño; continuar reforzando la revisión preventiva.',
-      score: 'B',
-      ratio
-    };
-  }
-  
-  if (ratio <= 0.5) {
-    return {
-      label: 'Atención',
+      label: 'Detalle mejorable',
       className: 'text-warning fw-bold',
-      note: 'Se detectan hallazgos relevantes. Recomendar coaching y seguimiento puntual.',
+      note: 'Nivel de hallazgos bajo. Reforzar la revisión para asegurar que ninguna falla quede sin registrar.',
       score: 'C',
       ratio
     };
   }
   
+  if (ratio < 0.3) {
+    return {
+      label: 'Buen nivel',
+      className: 'text-primary fw-bold',
+      note: 'Detección consistente de oportunidades de mejora; seguir monitoreando el estándar.',
+      score: 'B',
+      ratio
+    };
+  }
+  
   return {
-    label: 'Crítico',
-    className: 'text-danger fw-bold',
-    note: 'Exceso de hallazgos con derivación a tickets. Revisar procedimientos y apoyo en terreno.',
-    score: 'D',
+    label: 'Excelente detalle',
+    className: 'text-success fw-bold',
+    note: 'Alta capacidad para identificar fallas y generar tickets que protegen la operación.',
+    score: 'A',
     ratio
   };
 }
@@ -5910,6 +5933,7 @@ async function startSession(name, terminal) {
     // Update application state
     APP_STATE.session.inspector = normalizedName;
     APP_STATE.session.terminal = normalizedTerminal;
+    autoFillExtinguisherLocation(true);
     
     // Update UI
     const userInfo = document.getElementById('userInfo');
@@ -6111,6 +6135,7 @@ function selectBus(bus) {
   try {
     // Update state
     APP_STATE.currentBus = bus;
+    autoFillExtinguisherLocation(true);
     
     // Get display elements
     const busInfoElements = {
@@ -6414,9 +6439,11 @@ async function loadInspectionSections(inspectionId) {
     if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = advertisingData.publicidad_luneta_residuos || 'NO';
   }
   
-    clearTimeout(loaderId);
-    hideLoader();
-    return true;
+  autoFillExtinguisherLocation(false);
+  
+  clearTimeout(loaderId);
+  hideLoader();
+  return true;
   } catch (error) {
     clearTimeout(loaderId);
     hideLoader();
@@ -6523,6 +6550,30 @@ function getFormInputs() {
 }
 
 /**
+ * Automatically fills the extinguisher location field using the active session
+ * or the terminal of the bus currently inspeccionado.
+ * @param {boolean} force - When true, always overwrite the current value.
+ */
+function autoFillExtinguisherLocation(force = false) {
+  const formInputs = getFormInputs();
+  const locationInput = formInputs.extinguisherLocation;
+  if (!locationInput) return;
+  
+  const inspectorActive = (APP_STATE.session?.inspector || '').trim() !== '';
+  if (!inspectorActive) return;
+  
+  const busTerminal = (APP_STATE.currentBus?.terminal || '').trim();
+  const sessionTerminal = (APP_STATE.session?.terminal || '').trim();
+  const suggestedTerminal = busTerminal || sessionTerminal;
+  if (!suggestedTerminal) return;
+  
+  const currentValue = (locationInput.value || '').trim();
+  if (force || currentValue === '') {
+    locationInput.value = suggestedTerminal;
+  }
+}
+
+/**
  * Clears all form fields
  */
 function clearForm() {
@@ -6588,6 +6639,8 @@ function clearForm() {
   if (formInputs.publicityRearDamage) formInputs.publicityRearDamage.value = 'NO';
   if (formInputs.publicityRearDamageDetail) formInputs.publicityRearDamageDetail.value = '';
   if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = 'NO';
+  
+  autoFillExtinguisherLocation(true);
   
   if (formInputs.globalStatus) formInputs.globalStatus.value = 'OK';
   if (formInputs.generalObservations) formInputs.generalObservations.value = '';
@@ -7828,6 +7881,240 @@ async function refreshExtinguisherReport(filters = {}) {
  * Refreshes the session ingress report
  * @param {Object} filters - Filter criteria
  */
+async function hydrateSessionSessions(sessions = []) {
+  if (!supabase) return;
+  if (!Array.isArray(sessions) || sessions.length === 0) return;
+  
+  const nowIso = new Date().toISOString();
+  
+  for (const session of sessions) {
+    const existingBusCount = Array.isArray(session?.buses) ? session.buses.length : 0;
+    
+    if (existingBusCount > 0) {
+      continue;
+    }
+    
+    const inspector = normalizeInspectorName(session?.inspector || '');
+    if (!inspector) continue;
+    
+    const terminal = (session?.terminal || '').trim();
+    const startIso = session?.started_at ? new Date(session.started_at).toISOString() : null;
+    const endIso = session?.ended_at ? new Date(session.ended_at).toISOString() : nowIso;
+    
+    if (!startIso) continue;
+    
+    let inspectionQuery = supabase
+      .from('revision_semanal_inspecciones')
+      .select('id, bus_id, inspector_nombre, terminal, fecha_inspeccion, estado_global')
+      .eq('inspector_nombre', inspector)
+      .gte('fecha_inspeccion', startIso)
+      .lte('fecha_inspeccion', endIso)
+      .order('fecha_inspeccion', { ascending: true });
+    
+    if (terminal) {
+      inspectionQuery = inspectionQuery.eq('terminal', terminal);
+    }
+    
+    const { data: inspections, error: inspectionsError } = await inspectionQuery;
+    if (inspectionsError) {
+      console.error('Error fetching inspections for session:', inspectionsError);
+      continue;
+    }
+    
+    const inspectionRows = inspections || [];
+    if (inspectionRows.length === 0) {
+      session.buses = [];
+      session.bus_count = 0;
+      session.ticket_count = 0;
+      continue;
+    }
+    
+    const inspectionIds = inspectionRows.map(row => row.id).filter(Boolean);
+    const busIds = inspectionRows.map(row => row.bus_id).filter(Boolean);
+    
+    let busMap = new Map();
+    if (busIds.length > 0) {
+      const { data: busRows, error: busError } = await supabase
+        .from('revision_semanal_buses')
+        .select('id, ppu, terminal, asignacion, modelo_chasis, marca, anio')
+        .in('id', busIds);
+      
+      if (!busError) {
+        (busRows || []).forEach(bus => {
+          if (bus && bus.id) {
+            busMap.set(bus.id, bus);
+          }
+        });
+      }
+    }
+    
+    let ticketRows = [];
+    if (inspectionIds.length > 0) {
+      const { data: tickets, error: ticketError } = await supabase
+        .from('revision_semanal_tickets_mantencion')
+        .select('id, inspeccion_id, componente, descripcion_falla, created_at')
+        .in('inspeccion_id', inspectionIds);
+      
+      if (!ticketError) {
+        ticketRows = tickets || [];
+      }
+    }
+    
+    const ticketsByInspection = new Map();
+    ticketRows.forEach(ticket => {
+      if (!ticket || !ticket.inspeccion_id) return;
+      if (!ticketsByInspection.has(ticket.inspeccion_id)) {
+        ticketsByInspection.set(ticket.inspeccion_id, []);
+      }
+      ticketsByInspection.get(ticket.inspeccion_id).push({
+        id: ticket.id,
+        componente: ticket.componente || '—',
+        descripcion: ticket.descripcion_falla || '—',
+        fecha: ticket.created_at || null
+      });
+    });
+    
+    const busEntries = inspectionRows.map((inspection, index) => {
+      const bus = inspection.bus_id ? (busMap.get(inspection.bus_id) || {}) : {};
+      const tickets = ticketsByInspection.get(inspection.id) || [];
+      return {
+        inspection_id: inspection.id,
+        index: index + 1,
+        bus_ppu: bus.ppu || '—',
+        terminal: bus.terminal || inspection.terminal || terminal || '—',
+        fecha: inspection.fecha_inspeccion || null,
+        estado: inspection.estado_global || 'OK',
+        tickets
+      };
+    });
+    
+    session.buses = busEntries;
+    session.bus_count = busEntries.length;
+    session.ticket_count = ticketRows.length;
+  }
+}
+
+/**
+ * Aggregates sessions for the same inspector/terminal/day into a single consolidated row.
+ * @param {Array} sessions - Session rows
+ * @returns {Array} Aggregated rows
+ */
+function aggregateSessionRows(sessions = []) {
+  if (!Array.isArray(sessions) || sessions.length === 0) return [];
+  
+  const aggregates = new Map();
+  
+  sessions.forEach(session => {
+    if (!session) return;
+    
+    const inspectorName = normalizeInspectorName(session.inspector || '');
+    const inspectorKey = normalizeInspectorKey(session.inspector || '');
+    const terminal = (session.terminal || '').trim();
+    const terminalKey = terminal.toLowerCase();
+    
+    const startedDate = session.started_at ? new Date(session.started_at) : null;
+    const dateKey = startedDate && !Number.isNaN(startedDate.getTime())
+      ? startedDate.toISOString().slice(0, 10)
+      : 'unknown';
+    
+    const key = [inspectorKey, terminalKey, dateKey].join('|');
+    
+    const createBusKey = (bus) => {
+      if (!bus) return '';
+      if (bus.inspection_id) return `insp_${bus.inspection_id}`;
+      const fecha = bus.fecha ? new Date(bus.fecha).toISOString() : '';
+      return `bus_${(bus.bus_ppu || '').toUpperCase()}_${fecha}_${bus.estado || ''}`;
+    };
+    
+    const finalizeCounts = (aggregate) => {
+      aggregate.bus_count = aggregate.__buses.length;
+      aggregate.ticket_count = aggregate.__buses.reduce((sum, bus) => {
+        const tickets = Array.isArray(bus.tickets) ? bus.tickets : [];
+        return sum + tickets.length;
+      }, 0);
+      aggregate.buses = aggregate.__buses;
+    };
+    
+    const ensureTicketArrays = (busEntries = []) => {
+      return busEntries.map(bus => {
+        if (!bus) return null;
+        const clone = { ...bus };
+        clone.tickets = Array.isArray(bus.tickets)
+          ? bus.tickets.map(ticket => ({ ...ticket }))
+          : [];
+        return clone;
+      }).filter(Boolean);
+    };
+    
+    if (!aggregates.has(key)) {
+      const aggregate = {
+        ...session,
+        inspector: inspectorName,
+        terminal,
+        started_at: session.started_at,
+        ended_at: session.ended_at,
+        __busKeys: new Set(),
+        __buses: []
+      };
+      
+      const buses = ensureTicketArrays(session.buses);
+      buses.forEach(bus => {
+        const busKey = createBusKey(bus);
+        if (!aggregate.__busKeys.has(busKey)) {
+          aggregate.__busKeys.add(busKey);
+          aggregate.__buses.push(bus);
+        }
+      });
+      
+      finalizeCounts(aggregate);
+      aggregates.set(key, aggregate);
+      return;
+    }
+    
+    const aggregate = aggregates.get(key);
+    
+    // Merge time range
+    const existingStart = aggregate.started_at ? new Date(aggregate.started_at) : null;
+    const incomingStart = session.started_at ? new Date(session.started_at) : null;
+    if (existingStart && incomingStart && incomingStart < existingStart) {
+      aggregate.started_at = incomingStart.toISOString();
+    } else if (!existingStart && incomingStart) {
+      aggregate.started_at = incomingStart.toISOString();
+    }
+    
+    const existingEnd = aggregate.ended_at ? new Date(aggregate.ended_at) : null;
+    const incomingEnd = session.ended_at ? new Date(session.ended_at) : null;
+    if (!existingEnd && incomingEnd) {
+      aggregate.ended_at = incomingEnd.toISOString();
+    } else if (existingEnd && incomingEnd && incomingEnd > existingEnd) {
+      aggregate.ended_at = incomingEnd.toISOString();
+    }
+    
+    // Merge buses
+    const buses = ensureTicketArrays(session.buses);
+    buses.forEach(bus => {
+      const busKey = createBusKey(bus);
+      if (!aggregate.__busKeys.has(busKey)) {
+        aggregate.__busKeys.add(busKey);
+        aggregate.__buses.push(bus);
+      }
+    });
+    
+    finalizeCounts(aggregate);
+  });
+  
+  return Array.from(aggregates.values()).map(item => {
+    const clean = { ...item };
+    delete clean.__busKeys;
+    delete clean.__buses;
+    return clean;
+  }).sort((a, b) => {
+    const dateA = a.started_at ? new Date(a.started_at).getTime() : 0;
+    const dateB = b.started_at ? new Date(b.started_at).getTime() : 0;
+    return dateB - dateA;
+  });
+}
+
 async function refreshSessionReport(filters = {}) {
   if (!supabase) return;
   const loaderId = showLoader('Cargando ingresos del personal...');
@@ -7893,17 +8180,21 @@ async function refreshSessionReport(filters = {}) {
     
     const sessions = (rows || []).map(normalizeSessionLogRow);
     const sessionsDeduped = deduplicateSessionsByInspectorHour(sessions);
-    APP_STATE.sessionReportRows = sessionsDeduped;
+    
+    await hydrateSessionSessions(sessionsDeduped);
+    
+    const aggregatedSessions = aggregateSessionRows(sessionsDeduped);
+    APP_STATE.sessionReportRows = aggregatedSessions;
     
     const uniqueInspectors = new Set(
-      sessionsDeduped
+      aggregatedSessions
         .map(row => normalizeInspectorName(row.inspector || ''))
         .filter(Boolean)
     );
-    const totalBuses = sessionsDeduped.reduce((sum, row) => sum + (Number(row.bus_count) || 0), 0);
-    const totalTickets = sessionsDeduped.reduce((sum, row) => sum + (Number(row.ticket_count) || 0), 0);
+    const totalBuses = aggregatedSessions.reduce((sum, row) => sum + (Number(row.bus_count) || 0), 0);
+    const totalTickets = aggregatedSessions.reduce((sum, row) => sum + (Number(row.ticket_count) || 0), 0);
     
-    const ratioAggregate = sessionsDeduped.reduce((acc, row) => {
+    const ratioAggregate = aggregatedSessions.reduce((acc, row) => {
       const buses = Number(row.bus_count) || 0;
       const tickets = Number(row.ticket_count) || 0;
       if (buses > 0) {
@@ -7930,12 +8221,12 @@ async function refreshSessionReport(filters = {}) {
     if (ticketTotalEl) ticketTotalEl.textContent = totalTickets.toString();
     if (avgScoreEl) avgScoreEl.textContent = averageEvaluation.score;
     if (avgNoteEl) avgNoteEl.textContent = averageEvaluation.note;
-    if (sessionCountBadge) sessionCountBadge.textContent = sessionsDeduped.length.toString();
+    if (sessionCountBadge) sessionCountBadge.textContent = aggregatedSessions.length.toString();
     
     const tableBody = document.querySelector('#sessionTable tbody');
     if (tableBody) {
-      if (sessionsDeduped.length > 0) {
-        tableBody.innerHTML = sessionsDeduped.map((row, index) => {
+      if (aggregatedSessions.length > 0) {
+        tableBody.innerHTML = aggregatedSessions.map((row, index) => {
           const evaluation = getSessionEvaluation(row);
           const started = formatDateTime(row.started_at);
           const ended = row.ended_at ? formatDateTime(row.ended_at) : 'En curso';
@@ -8361,14 +8652,44 @@ async function refreshAdvertisingReport(filters = {}) {
       });
     }
     
-    filteredRows.sort((a, b) => {
+    const groupedRows = [];
+    const groupMap = new Map();
+    
+    filteredRows.forEach(row => {
+      const key = `${(row.ppu || '').toUpperCase()}|${(row.terminal || '').toUpperCase()}`;
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          ppu: row.ppu,
+          terminal: row.terminal,
+          izquierda: { state: 'NO TIENE', detail: '', damage: 'NO', damageDetail: '', residue: 'NO' },
+          derecha: { state: 'NO TIENE', detail: '', damage: 'NO', damageDetail: '', residue: 'NO' },
+          luneta: { state: 'NO TIENE', detail: '', damage: 'NO', damageDetail: '', residue: 'NO' }
+        });
+      }
+      
+      const group = groupMap.get(key);
+      const sideKey = row.side.toLowerCase();
+      if (group[sideKey]) {
+        group[sideKey] = {
+          state: row.state || 'NO TIENE',
+          detail: row.detail || '',
+          damage: row.damage || 'NO',
+          damageDetail: row.damageDetail || '',
+          residue: row.residue || 'NO'
+        };
+      }
+    });
+    
+    groupMap.forEach(value => groupedRows.push(value));
+    
+    groupedRows.sort((a, b) => {
       const ppuA = (a.ppu || '').toUpperCase();
       const ppuB = (b.ppu || '').toUpperCase();
       if (ppuA !== ppuB) return ppuA.localeCompare(ppuB);
-      return a.side.localeCompare(b.side);
+      return (a.terminal || '').localeCompare(b.terminal || '');
     });
     
-    const totalCount = filteredRows.length;
+    const totalCount = groupedRows.length;
     
     const reportCount = document.getElementById('advertisingReportCount');
     const badgeCount = document.getElementById('advertisingCount');
@@ -8379,29 +8700,40 @@ async function refreshAdvertisingReport(filters = {}) {
     const tableBody = document.querySelector('#advertisingTable tbody');
     
     if (tableBody) {
-      if (filteredRows.length > 0) {
-        tableBody.innerHTML = filteredRows.map((row, index) => {
-          const damageClass = row.damage === 'SI' ? 'text-danger fw-bold' : '';
-          const residueClass = row.residue === 'SI' ? 'text-warning fw-medium' : '';
-          const observations = [
-            row.detail ? `Publicidad: ${row.detail}` : '',
-            row.damage === 'SI' && row.damageDetail ? `Daño: ${row.damageDetail}` : ''
-          ].filter(Boolean).join(' · ') || '—';
+      if (groupedRows.length > 0) {
+        tableBody.innerHTML = groupedRows.map((row, index) => {
+          const buildCell = (section) => {
+            const { state, detail, damage, damageDetail, residue } = row[section];
+            const damageText = damage === 'SI' ? 'Sí' : 'No';
+            const residueText = residue === 'SI' ? 'Sí' : 'No';
+            const notes = [
+              detail ? `Publicidad: ${detail}` : '',
+              damage === 'SI' && damageDetail ? `Daño: ${damageDetail}` : ''
+            ].filter(Boolean).join(' · ') || '—';
+            
+            const damageClass = damage === 'SI' ? 'text-danger fw-bold' : '';
+            const residueClass = residue === 'SI' ? 'text-warning fw-medium' : '';
+            
+            return `
+              <td>${escapeHTML(state || 'NO TIENE')}</td>
+              <td>${escapeHTML(detail || '—')}</td>
+              <td class="${damageClass}">${damageText}</td>
+              <td class="${residueClass}">${residueText}</td>
+              <td>${escapeHTML(notes)}</td>
+            `;
+          };
           
           return `<tr>
             <td>${index + 1}</td>
-            <td>${escapeHTML(row.ppu)}</td>
-            <td>${escapeHTML(row.terminal)}</td>
-            <td>${escapeHTML(row.side)}</td>
-            <td>${escapeHTML(row.state)}</td>
-            <td>${escapeHTML(row.detail || '—')}</td>
-            <td class="${damageClass}">${row.damage === 'SI' ? 'Sí' : 'No'}</td>
-            <td class="${residueClass}">${row.residue === 'SI' ? 'Sí' : 'No'}</td>
-            <td>${escapeHTML(observations)}</td>
+            <td>${escapeHTML(row.ppu || '—')}</td>
+            <td>${escapeHTML(row.terminal || '—')}</td>
+            ${buildCell('izquierda')}
+            ${buildCell('derecha')}
+            ${buildCell('luneta')}
           </tr>`;
         }).join('');
       } else {
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No hay datos disponibles para los filtros seleccionados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="17" class="text-center">No hay datos disponibles para los filtros seleccionados.</td></tr>';
       }
     }
   } catch (error) {
@@ -9018,7 +9350,11 @@ async function loadMaintenanceTickets(filters = {}) {
     }
     
     if (filters.component) {
-      query = query.eq('componente', filters.component);
+      if (filters.component === 'Publicidad') {
+        query = query.ilike('componente', 'Publicidad%');
+      } else {
+        query = query.eq('componente', filters.component);
+      }
     }
     
     if (filters.priority) {
@@ -10208,6 +10544,7 @@ function initializeApp() {
         const normalizedTerminal = (session.terminal || '').trim();
         APP_STATE.session.inspector = normalizedInspector;
         APP_STATE.session.terminal = normalizedTerminal;
+        autoFillExtinguisherLocation(true);
         
         // Update UI
         const userInfo = document.getElementById('userInfo');
@@ -10753,7 +11090,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('btnExportAdvertising')?.addEventListener('click', () => {
     exportTableToXLSX('Informe_Publicidad_' + APP_STATE.session.week,
-                     ['#', 'PPU', 'TERMINAL', 'UBICACIÓN', 'ESTADO', 'PUBLICIDAD', 'DAÑO POR RETIRO', 'RESIDUOS', 'OBSERVACIONES'],
+                     ['#', 'PPU', 'TERMINAL',
+                      'ESTADO IZQ', 'PUBLICIDAD IZQ', 'DAÑO IZQ', 'RESIDUOS IZQ', 'OBSERVACIONES IZQ',
+                      'ESTADO DER', 'PUBLICIDAD DER', 'DAÑO DER', 'RESIDUOS DER', 'OBSERVACIONES DER',
+                      'ESTADO LUNETA', 'PUBLICIDAD LUNETA', 'DAÑO LUNETA', 'RESIDUOS LUNETA', 'OBSERVACIONES LUNETA'],
                      'advertisingTable');
   });
   
