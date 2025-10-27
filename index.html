@@ -2299,6 +2299,142 @@ textarea.form-control {
   white-space: nowrap;
 }
 
+.session-ppu-search {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow);
+}
+
+.session-ppu-search-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.session-ppu-search-header h4 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--dark);
+}
+
+.session-ppu-search-subtitle {
+  margin: var(--spacing-1) 0 0;
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+.session-ppu-search-form {
+  margin-bottom: var(--spacing-3);
+}
+
+.session-ppu-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.session-ppu-search-row .form-control {
+  flex: 1 1 220px;
+}
+
+.session-ppu-search-row .btn {
+  flex: 0 0 auto;
+}
+
+.session-search-feedback {
+  font-size: 0.95rem;
+  color: var(--text-light);
+  min-height: 1.2rem;
+}
+
+.session-search-feedback.error {
+  color: var(--danger);
+}
+
+.session-search-feedback.success {
+  color: var(--success);
+}
+
+.session-ppu-results {
+  margin-top: var(--spacing-3);
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.session-ppu-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.session-ppu-summary .chip {
+  background-color: var(--bg-darker);
+}
+
+.session-ppu-inspector-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: var(--spacing-3);
+  background: var(--bg);
+  box-shadow: var(--shadow-xs);
+}
+
+.session-ppu-inspector-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
+}
+
+.session-ppu-inspector-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--dark);
+}
+
+.session-ppu-inspector-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.session-ppu-ticket-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.session-ppu-ticket-list li + li {
+  margin-top: var(--spacing-1);
+}
+
+.session-ppu-ticket-empty {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  background: var(--bg-darker);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-2);
+}
+
+.session-ppu-empty {
+  padding: var(--spacing-3);
+  border-radius: var(--radius);
+  background: var(--bg-darker);
+  text-align: center;
+  color: var(--text-light);
+  border: 1px dashed var(--border);
+}
+
 .section-divider {
   height: 1px;
   background-color: var(--border);
@@ -2828,7 +2964,7 @@ textarea.form-control {
               <div class="toggle-section-content" id="camerasSection">
                 <div class="form-grid">
                   <div class="col-6 col-md-12 form-group">
-                    <label class="form-label">Monitor de Cámaras La pantalla Esta Buena?</label>
+                    <label class="form-label">Monitor de Cámaras (¿todas las cámaras visibles?)</label>
                     <select class="form-control" id="monitorCamera">
                       <option value="">— Seleccionar —</option>
                       <option value="SI">SÍ</option>
@@ -3916,6 +4052,28 @@ textarea.form-control {
               </div>
             </div>
             
+            <div class="session-ppu-search mt-4" id="sessionPpuSearchPanel">
+              <div class="session-ppu-search-header">
+                <div>
+                  <h4>Buscar Revisiones por PPU</h4>
+                  <p class="session-ppu-search-subtitle">Identifica quién ha revisado un bus, cuántas veces y los tickets generados.</p>
+                </div>
+              </div>
+              <form class="session-ppu-search-form" id="sessionPpuSearchForm">
+                <div class="form-group">
+                  <label class="form-label" for="sessionPpuInput">PPU del Bus</label>
+                  <div class="session-ppu-search-row">
+                    <input type="text" class="form-control" id="sessionPpuInput" placeholder="Ej: AB1234">
+                    <button class="btn btn-primary" id="sessionPpuSearchBtn" type="submit">
+                      <i class="fas fa-search"></i> Buscar
+                    </button>
+                  </div>
+                </div>
+              </form>
+              <div class="session-search-feedback" id="sessionPpuSearchFeedback"></div>
+              <div class="session-ppu-results hidden" id="sessionPpuResults"></div>
+            </div>
+            
             <div class="table-container mt-4">
               <table class="table" id="sessionTable">
                 <thead>
@@ -4709,6 +4867,7 @@ const APP_STATE = {
   },
   sessionLoggingDisabled: false,
   sessionReportRows: [],
+  sessionReportSearch: null,
   initialized: false
 };
 
@@ -8279,6 +8438,382 @@ async function refreshSessionReport(filters = {}) {
   }
 }
 
+async function fetchSessionPpuData(ppu) {
+  if (!supabase) throw new Error('Supabase no está inicializado');
+  const sanitized = (ppu || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!sanitized) {
+    return null;
+  }
+  
+  const searchPattern = `%${sanitized}%`;
+  
+  const { data: busRows, error: busError } = await supabase
+    .from('revision_semanal_buses')
+    .select('id, ppu, terminal, asignacion, numero_interno, marca, modelo_chasis, anio')
+    .ilike('ppu', searchPattern);
+  
+  if (busError) throw busError;
+  
+  const buses = (busRows || []).filter(Boolean);
+  if (buses.length === 0) {
+    return {
+      ppu: sanitized,
+      buses: [],
+      totalInspections: 0,
+      totalTickets: 0,
+      inspectors: [],
+      terminals: [],
+      lastInspectionAt: null
+    };
+  }
+  
+  const busIds = buses.map(bus => bus.id).filter(Boolean);
+  if (busIds.length === 0) {
+    return {
+      ppu: sanitized,
+      buses,
+      totalInspections: 0,
+      totalTickets: 0,
+      inspectors: [],
+      terminals: [],
+      lastInspectionAt: null
+    };
+  }
+  
+  const { data: inspectionRows, error: inspectionError } = await supabase
+    .from('revision_semanal_inspecciones')
+    .select('id, inspector_nombre, terminal, fecha_inspeccion, estado_global, bus_id')
+    .in('bus_id', busIds)
+    .order('fecha_inspeccion', { ascending: false });
+  
+  if (inspectionError) throw inspectionError;
+  
+  const inspections = (inspectionRows || []).filter(Boolean);
+  const inspectionIds = inspections.map(row => row.id).filter(Boolean);
+  
+  let tickets = [];
+  if (inspectionIds.length > 0) {
+    const { data: ticketRows, error: ticketError } = await supabase
+      .from('revision_semanal_tickets_mantencion')
+      .select('id, inspeccion_id, componente, descripcion_falla, estado, prioridad, created_at')
+      .in('inspeccion_id', inspectionIds);
+    
+    if (ticketError) throw ticketError;
+    tickets = (ticketRows || []).filter(Boolean);
+  }
+  
+  const ticketsByInspection = new Map();
+  tickets.forEach(ticket => {
+    if (!ticket || !ticket.inspeccion_id) return;
+    if (!ticketsByInspection.has(ticket.inspeccion_id)) {
+      ticketsByInspection.set(ticket.inspeccion_id, []);
+    }
+    ticketsByInspection.get(ticket.inspeccion_id).push(ticket);
+  });
+  
+  const terminals = new Set();
+  let lastInspection = null;
+  const inspectorMap = new Map();
+  
+  inspections.forEach(inspection => {
+    const terminalName = (inspection.terminal || '').trim() || '—';
+    terminals.add(terminalName);
+    
+    if (inspection.fecha_inspeccion) {
+      const inspectionDate = new Date(inspection.fecha_inspeccion);
+      if (!Number.isNaN(inspectionDate.getTime())) {
+        if (!lastInspection || inspectionDate > lastInspection) {
+          lastInspection = inspectionDate;
+        }
+      }
+    }
+    
+    const inspectorNameRaw = inspection.inspector_nombre || '';
+    const inspectorName = normalizeInspectorName(inspectorNameRaw) || 'Sin Inspector';
+    const inspectorKey = normalizeInspectorKey(inspectorNameRaw || inspectorName);
+    
+    if (!inspectorMap.has(inspectorKey)) {
+      inspectorMap.set(inspectorKey, {
+        name: inspectorName,
+        reviewCount: 0,
+        ticketCount: 0,
+        lastReview: null,
+        terminals: new Set(),
+        tickets: []
+      });
+    }
+    
+    const summary = inspectorMap.get(inspectorKey);
+    summary.reviewCount += 1;
+    summary.terminals.add(terminalName);
+    
+    if (inspection.fecha_inspeccion) {
+      const inspectionDate = new Date(inspection.fecha_inspeccion);
+      if (!Number.isNaN(inspectionDate.getTime())) {
+        if (!summary.lastReview || inspectionDate > summary.lastReview) {
+          summary.lastReview = inspectionDate;
+        }
+      }
+    }
+    
+    const relatedTickets = ticketsByInspection.get(inspection.id) || [];
+    summary.ticketCount += relatedTickets.length;
+    relatedTickets.forEach(ticket => {
+      summary.tickets.push({
+        id: ticket.id,
+        componente: ticket.componente || '—',
+        descripcion: ticket.descripcion_falla || 'Sin descripción',
+        estado: ticket.estado || '',
+        prioridad: ticket.prioridad || '',
+        fecha: ticket.created_at || null
+      });
+    });
+  });
+  
+  const inspectors = Array.from(inspectorMap.values()).map(summary => {
+    const sortedTickets = summary.tickets.slice().sort((a, b) => {
+      const dateA = a.fecha ? new Date(a.fecha).getTime() : 0;
+      const dateB = b.fecha ? new Date(b.fecha).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    return {
+      name: summary.name,
+      reviewCount: summary.reviewCount,
+      ticketCount: summary.ticketCount,
+      lastReview: summary.lastReview ? summary.lastReview.toISOString() : null,
+      terminals: Array.from(summary.terminals),
+      tickets: sortedTickets
+    };
+  }).sort((a, b) => {
+    if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
+    if (b.ticketCount !== a.ticketCount) return b.ticketCount - a.ticketCount;
+    const dateA = a.lastReview ? new Date(a.lastReview).getTime() : 0;
+    const dateB = b.lastReview ? new Date(b.lastReview).getTime() : 0;
+    return dateB - dateA;
+  });
+  
+  return {
+    ppu: sanitized,
+    buses,
+    totalInspections: inspections.length,
+    totalTickets: tickets.length,
+    inspectors,
+    terminals: Array.from(terminals).filter(Boolean),
+    lastInspectionAt: lastInspection ? lastInspection.toISOString() : null
+  };
+}
+
+function renderSessionPpuResults(ppu, result) {
+  const container = document.getElementById('sessionPpuResults');
+  if (!container) return;
+  
+  const safePPU = escapeHTML(ppu || '');
+  container.classList.remove('hidden');
+  
+  if (!result) {
+    container.innerHTML = `<div class="session-ppu-empty">No se pudo obtener información para la PPU <strong>${safePPU}</strong>.</div>`;
+    return;
+  }
+  
+  const buses = Array.isArray(result.buses) ? result.buses : [];
+  if (buses.length === 0) {
+    container.innerHTML = `<div class="session-ppu-empty">No encontramos buses registrados con la PPU <strong>${safePPU}</strong>.</div>`;
+    return;
+  }
+  
+  const busSample = buses[0] || {};
+  const internos = Array.from(new Set(
+    buses
+      .map(bus => (bus?.numero_interno || '').trim())
+      .filter(Boolean)
+  ));
+  const assignments = Array.from(new Set(
+    buses
+      .map(bus => (bus?.asignacion || '').trim())
+      .filter(Boolean)
+  ));
+  
+  const summaryChips = [];
+  summaryChips.push(`<span class="chip chip-primary"><i class="fas fa-bus"></i>${escapeHTML(busSample.ppu || ppu)}</span>`);
+  if (internos.length > 0) {
+    summaryChips.push(`<span class="chip"><i class="fas fa-hashtag"></i>${escapeHTML(internos.join(', '))}</span>`);
+  }
+  if (assignments.length > 0) {
+    summaryChips.push(`<span class="chip"><i class="fas fa-route"></i>${escapeHTML(assignments.join(', '))}</span>`);
+  }
+  if (result.terminals && result.terminals.length > 0) {
+    summaryChips.push(`<span class="chip"><i class="fas fa-map-marker-alt"></i>${escapeHTML(result.terminals.join(', '))}</span>`);
+  }
+  summaryChips.push(`<span class="chip chip-success"><i class="fas fa-clipboard-check"></i>${result.totalInspections} revisión${result.totalInspections === 1 ? '' : 'es'}</span>`);
+  summaryChips.push(`<span class="chip chip-warning"><i class="fas fa-ticket-alt"></i>${result.totalTickets} ticket${result.totalTickets === 1 ? '' : 's'}</span>`);
+  summaryChips.push(`<span class="chip"><i class="fas fa-user-check"></i>${result.inspectors.length} inspector${result.inspectors.length === 1 ? '' : 'es'}</span>`);
+  if (result.lastInspectionAt) {
+    summaryChips.push(`<span class="chip"><i class="fas fa-clock"></i>${escapeHTML(formatDateTime(result.lastInspectionAt))}</span>`);
+  }
+  
+  if (result.totalInspections === 0) {
+    container.innerHTML = `
+      <div class="session-ppu-summary">${summaryChips.join('')}</div>
+      <div class="session-ppu-empty">El bus está registrado, pero no tiene inspecciones asociadas.</div>
+    `;
+    return;
+  }
+  
+  const priorityMap = {
+    low: { text: 'Baja', className: 'text-success' },
+    medium: { text: 'Media', className: 'text-primary' },
+    high: { text: 'Alta', className: 'text-warning' },
+    critical: { text: 'Crítica', className: 'text-danger' }
+  };
+  
+  const inspectorCards = (result.inspectors || []).map(inspector => {
+    const statsParts = [
+      `<span><i class="fas fa-ticket-alt"></i> ${inspector.ticketCount} ticket${inspector.ticketCount === 1 ? '' : 's'}</span>`
+    ];
+    
+    if (Array.isArray(inspector.terminals) && inspector.terminals.length > 0) {
+      statsParts.push(`<span><i class="fas fa-map-marker-alt"></i> ${escapeHTML(inspector.terminals.join(', '))}</span>`);
+    }
+    if (inspector.lastReview) {
+      statsParts.push(`<span><i class="fas fa-clock"></i> ${escapeHTML(formatDateTime(inspector.lastReview))}</span>`);
+    }
+    
+    const tickets = Array.isArray(inspector.tickets) ? inspector.tickets : [];
+    const ticketItems = tickets.slice(0, 5).map(ticket => {
+      const pieces = [];
+      pieces.push(`<strong>${escapeHTML(ticket.componente || '—')}</strong>`);
+      pieces.push(escapeHTML(ticket.descripcion || 'Sin descripción'));
+      
+      if (ticket.prioridad) {
+        const priorityInfo = priorityMap[ticket.prioridad] || { text: ticket.prioridad, className: '' };
+        const classAttr = priorityInfo.className ? ` ${priorityInfo.className}` : '';
+        pieces.push(`<span class="fw-medium${classAttr}">${escapeHTML(priorityInfo.text)}</span>`);
+      }
+      
+      if (ticket.estado) {
+        pieces.push(escapeHTML(ticket.estado));
+      }
+      
+      if (ticket.fecha) {
+        pieces.push(escapeHTML(formatDateTime(ticket.fecha)));
+      }
+      
+      return `<li>${pieces.join(' · ')}</li>`;
+    }).join('');
+    
+    const additionalTickets = tickets.length > 5
+      ? `<div class="session-search-feedback">${tickets.length - 5} tickets adicionales no mostrados.</div>`
+      : '';
+    
+    const ticketsSection = tickets.length > 0
+      ? `<ul class="session-ppu-ticket-list">${ticketItems}</ul>${additionalTickets}`
+      : '<div class="session-ppu-ticket-empty">Sin tickets generados por este inspector.</div>';
+    
+    return `<div class="session-ppu-inspector-card">
+      <div class="session-ppu-inspector-header">
+        <h5><i class="fas fa-user-check"></i> ${escapeHTML(inspector.name || 'Sin Inspector')}</h5>
+        <span class="chip chip-primary">${inspector.reviewCount} revisión${inspector.reviewCount === 1 ? '' : 'es'}</span>
+      </div>
+      <div class="session-ppu-inspector-stats">
+        ${statsParts.join(' ')}
+      </div>
+      ${ticketsSection}
+    </div>`;
+  }).join('');
+  
+  container.innerHTML = `
+    <div class="session-ppu-summary">${summaryChips.join('')}</div>
+    ${inspectorCards || '<div class="session-ppu-empty">No se encontraron inspectores asociados a esta PPU.</div>'}
+  `;
+}
+
+async function handleSessionPpuSearch() {
+  const input = document.getElementById('sessionPpuInput');
+  const feedback = document.getElementById('sessionPpuSearchFeedback');
+  const resultsContainer = document.getElementById('sessionPpuResults');
+  
+  if (!input) return;
+  
+  const rawValue = input.value.trim();
+  if (!rawValue) {
+    if (feedback) {
+      feedback.textContent = 'Ingresa una PPU para realizar la búsqueda.';
+      feedback.classList.add('error');
+    }
+    return;
+  }
+  
+  const sanitized = rawValue.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (sanitized.length < 3) {
+    if (feedback) {
+      feedback.classList.remove('success');
+      feedback.textContent = 'El término es muy corto. Ingresa al menos 3 caracteres.';
+      feedback.classList.add('error');
+    }
+    return;
+  }
+  
+  input.value = sanitized;
+  
+  if (feedback) {
+    feedback.textContent = 'Buscando revisiones...';
+    feedback.classList.remove('error', 'success');
+  }
+  if (resultsContainer) {
+    resultsContainer.classList.add('hidden');
+    resultsContainer.innerHTML = '';
+  }
+  
+  const loaderId = showLoader('Buscando revisiones por PPU...');
+  
+  try {
+    const result = await fetchSessionPpuData(sanitized);
+    clearTimeout(loaderId);
+    hideLoader();
+    
+    renderSessionPpuResults(sanitized, result);
+    APP_STATE.sessionReportSearch = { ppu: sanitized, result };
+    
+    if (feedback) {
+      if (result && result.totalInspections > 0) {
+        feedback.textContent = `Se encontraron ${result.totalInspections} revisión${result.totalInspections === 1 ? '' : 'es'} para ${sanitized}.`;
+        feedback.classList.add('success');
+      } else if (result && result.buses.length > 0) {
+        feedback.textContent = `El bus está registrado, pero no tiene inspecciones asociadas.`;
+        feedback.classList.add('error');
+      } else {
+        feedback.textContent = `No se encontró información para la PPU ${sanitized}.`;
+        feedback.classList.add('error');
+      }
+    }
+  } catch (error) {
+    clearTimeout(loaderId);
+    hideLoader();
+    
+    console.error('Error buscando revisiones por PPU:', error);
+    if (feedback) {
+      feedback.textContent = error?.message || 'No se pudo completar la búsqueda.';
+      feedback.classList.add('error');
+    }
+    showNotification('error', 'Error', 'No se pudo obtener la información de revisiones para ese PPU.');
+  }
+}
+
+function setupSessionReportSearch() {
+  const form = document.getElementById('sessionPpuSearchForm');
+  if (form) {
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      handleSessionPpuSearch();
+    });
+  }
+  
+  if (APP_STATE.sessionReportSearch?.result && APP_STATE.sessionReportSearch?.ppu) {
+    renderSessionPpuResults(APP_STATE.sessionReportSearch.ppu, APP_STATE.sessionReportSearch.result);
+  }
+}
+
 function openSessionDetail(index) {
   const sessions = APP_STATE.sessionReportRows || [];
   const row = sessions[index];
@@ -10634,6 +11169,7 @@ function initializeApp() {
     
     // 8. Setup search handlers
     setupSearchHandlers();
+    setupSessionReportSearch();
     
     // 9. Show last section visited or default
     const lastSection = localStorage.getItem(APP_CONFIG.storageKeys.lastSection) || 'inspection-form';
