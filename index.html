@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sistema Avanzado de Inspección de Buses</title>
+  <title>Mini-Check</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2568,13 +2568,10 @@ textarea.form-control {
         <div class="header-logo">
           <i class="fas fa-bus-alt"></i>
         </div>
-        <span>Inspección de Buses</span>
+        <span>Mini-Check</span>
       </div>
 
-      <div class="global-search">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" class="search-input" id="globalSearch" placeholder="Buscar por PPU o #interno...">
-      </div>
+
 
       <div class="header-actions">
         <div class="chip chip-primary">
@@ -2964,7 +2961,7 @@ textarea.form-control {
               <div class="toggle-section-content" id="camerasSection">
                 <div class="form-grid">
                   <div class="col-6 col-md-12 form-group">
-                    <label class="form-label">Monitor de Cámaras (¿todas las cámaras visibles?)</label>
+                    <label class="form-label">Monitor de Cámaras (El monitor presenta daños?)</label>
                     <select class="form-control" id="monitorCamera">
                       <option value="">— Seleccionar —</option>
                       <option value="SI">SÍ</option>
@@ -2974,7 +2971,7 @@ textarea.form-control {
                   </div>
                   
                   <div class="col-6 col-md-12 form-group">
-                    <label class="form-label">Detalles del Monitor</label>
+                    <label class="form-label">Detalles del Monitor, ingresa Obs si tiene daños por golpes.</label>
                     <input type="text" class="form-control" id="monitorDetail" placeholder="ej., Todo OK / Cámara 2 sin señal">
                   </div>
                   
@@ -4803,14 +4800,7 @@ textarea.form-control {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
   <script>
-   /**
- * Sistema Avanzado de Inspección de Buses
- * Enhanced JavaScript Core
- * Version: 2.0.0
- * Author: Claude - Professional Web Developer
- */
 
-// ===================== GLOBAL CONFIGURATION =====================
 const APP_CONFIG = {
   supabase: {
     url: "https://wvcplgwemvqhvtstlqmt.supabase.co",
