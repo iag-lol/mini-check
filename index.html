@@ -4858,6 +4858,7 @@ const APP_STATE = {
   sessionLoggingDisabled: false,
   sessionReportRows: [],
   sessionReportSearch: null,
+  inspectionSectionCache: new Map(),
   initialized: false
 };
 
@@ -6150,6 +6151,9 @@ async function handleLogout() {
       // Clear session state
       APP_STATE.session.inspector = "";
       APP_STATE.session.terminal = "";
+      APP_STATE.inspectionId = null;
+      APP_STATE.currentBus = null;
+      APP_STATE.inspectionSectionCache.clear();
       localStorage.removeItem(APP_CONFIG.storageKeys.session);
       
       // Clear form data
@@ -6412,7 +6416,7 @@ async function loadWeeklyInspection(busId) {
       if (formInputs.generalObservations) formInputs.generalObservations.value = data.observacion_general || '';
       
       // Load inspection section data
-      await loadInspectionSections(data.id);
+      await loadInspectionSections(data.id, { withLoader: false });
     } else {
       // No inspection exists yet
       APP_STATE.inspectionId = null;
@@ -6449,25 +6453,94 @@ async function loadWeeklyInspection(busId) {
   }
 }
 
+async function fetchInspectionSections(inspectionId, options = {}) {
+  if (!inspectionId || !supabase) return null;
+  const { forceRefresh = false } = options;
+  if (!forceRefresh && APP_STATE.inspectionSectionCache.has(inspectionId)) {
+    return APP_STATE.inspectionSectionCache.get(inspectionId);
+  }
+  const isVolvoBus = (APP_STATE.currentBus?.marca || '').toUpperCase() === 'VOLVO';
+  const [
+    cameraResponse,
+    tagResponse,
+    extinguisherResponse,
+    mobileyeResponse,
+    odometerResponse,
+    advertisingResponse
+  ] = await Promise.all([
+    supabase.from('revision_semanal_camara_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle(),
+    supabase.from('revision_semanal_tag_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle(),
+    supabase.from('revision_semanal_extintor_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle(),
+    isVolvoBus
+      ? supabase.from('revision_semanal_movileye_inspeccion')
+          .select('*')
+          .eq('inspeccion_id', inspectionId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    supabase.from('revision_semanal_odometro_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle(),
+    supabase.from('revision_semanal_publicidad_inspeccion')
+      .select('*')
+      .eq('inspeccion_id', inspectionId)
+      .maybeSingle()
+  ]);
+
+  const logIfRelevant = (label, response) => {
+    if (response?.error && response.error.code !== 'PGRST116') {
+      console.error(`Error cargando sección de ${label}:`, response.error);
+    }
+  };
+
+  logIfRelevant('cámaras', cameraResponse);
+  logIfRelevant('TAG', tagResponse);
+  logIfRelevant('extintor', extinguisherResponse);
+  logIfRelevant('Mobileye', mobileyeResponse);
+  logIfRelevant('odómetro', odometerResponse);
+  logIfRelevant('publicidad', advertisingResponse);
+
+  const sections = {
+    camera: cameraResponse?.data || null,
+    tag: tagResponse?.data || null,
+    extinguisher: extinguisherResponse?.data || null,
+    mobileye: mobileyeResponse?.data || null,
+    odometer: odometerResponse?.data || null,
+    advertising: advertisingResponse?.data || null
+  };
+
+  APP_STATE.inspectionSectionCache.set(inspectionId, sections);
+  return sections;
+}
+
 /**
  * Loads individual sections of an inspection
  * @param {number} inspectionId - Inspection ID
+ * @param {Object} options - Loading options
+ * @param {boolean} [options.withLoader=true] - Whether to display the global loader
+ * @param {boolean} [options.forceRefresh=false] - Force fetching fresh data instead of using cache
  */
-async function loadInspectionSections(inspectionId) {
-  if (!inspectionId) return;
+async function loadInspectionSections(inspectionId, options = {}) {
+  if (!inspectionId) return false;
   
-  const loaderId = showLoader('Cargando datos de la inspección...');
+  const { withLoader = true, forceRefresh = false } = options;
+  const loaderId = withLoader ? showLoader('Cargando datos de la inspección...') : undefined;
   
   try {
     const formInputs = getFormInputs();
+    const sections = await fetchInspectionSections(inspectionId, { forceRefresh }) || {};
     
-    // 1. Load camera data
-    const { data: cameraData } = await supabase
-      .from('revision_semanal_camara_inspeccion')
-      .select('*')
-      .eq('inspeccion_id', inspectionId)
-      .maybeSingle();
-    
+    // 1. Cameras
+    const cameraData = sections.camera;
     if (cameraData) {
       if (formInputs.monitorCamera) formInputs.monitorCamera.value = cameraData.monitor_camara ? 'SI' : 'NO';
       if (formInputs.monitorDetail) formInputs.monitorDetail.value = cameraData.monitor_detalle || '';
@@ -6483,30 +6556,22 @@ async function loadInspectionSections(inspectionId) {
       if (formInputs.doorsClosed) formInputs.doorsClosed.value = cameraData.q_doors_closed || '';
     }
     
-    // 2. Load tag data
-    const { data: tagData } = await supabase
-      .from('revision_semanal_tag_inspeccion')
-      .select('*')
-      .eq('inspeccion_id', inspectionId)
-      .maybeSingle();
-    
+    // 2. TAG
+    const tagData = sections.tag;
     if (tagData) {
       if (formInputs.hasTag) formInputs.hasTag.value = tagData.tag_tiene ? 'yes' : 'no';
       if (formInputs.tagSerial) formInputs.tagSerial.value = tagData.tag_serie || '';
       if (formInputs.tagObservations) formInputs.tagObservations.value = tagData.observacion || '';
     }
     
-    // 3. Load extinguisher data
-    const { data: extinguisherData } = await supabase
-      .from('revision_semanal_extintor_inspeccion')
-      .select('*')
-      .eq('inspeccion_id', inspectionId)
-      .maybeSingle();
-    
+    // 3. Extinguisher
+    const extinguisherData = sections.extinguisher;
     if (extinguisherData) {
       if (formInputs.extinguisherLocation) formInputs.extinguisherLocation.value = extinguisherData.ubicacion || '';
       if (formInputs.extinguisherExpiry) {
-        formInputs.extinguisherExpiry.value = extinguisherData.fecha_vencimiento ? extinguisherData.fecha_vencimiento.substring(0, 10) : '';
+        formInputs.extinguisherExpiry.value = extinguisherData.fecha_vencimiento
+          ? extinguisherData.fecha_vencimiento.substring(0, 10)
+          : '';
       }
       if (formInputs.extinguisherStatus) formInputs.extinguisherStatus.value = extinguisherData.estado_extintor || 'TIENE';
       if (formInputs.certificationStatus) formInputs.certificationStatus.value = extinguisherData.estado_certificacion || 'TIENE';
@@ -6517,85 +6582,66 @@ async function loadInspectionSections(inspectionId) {
       if (formInputs.holderStatus) formInputs.holderStatus.value = extinguisherData.estado_porta_extintor || 'TIENE';
     }
     
-    // 4. Load Mobileye data (if applicable)
-    if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
-      const { data: mobileyeData } = await supabase
-        .from('revision_semanal_movileye_inspeccion')
-        .select('*')
-        .eq('inspeccion_id', inspectionId)
-        .maybeSingle();
+    // 4. Mobileye (Volvo only)
+    const isVolvoBus = (APP_STATE.currentBus?.marca || '').toUpperCase() === 'VOLVO';
+    const mobileyeData = isVolvoBus ? sections.mobileye : null;
+    if (mobileyeData) {
+      const formatStatus = value => (value || 'BUENO').toUpperCase();
+      if (formInputs.mobileyeStatus) formInputs.mobileyeStatus.value = mobileyeData.estado || '';
+      if (formInputs.leftAlert) formInputs.leftAlert.value = formatStatus(mobileyeData.alerta_izq);
+      if (formInputs.rightAlert) formInputs.rightAlert.value = formatStatus(mobileyeData.alerta_der);
+      if (formInputs.console) formInputs.console.value = formatStatus(mobileyeData.consola);
+      if (formInputs.frontSensor) formInputs.frontSensor.value = formatStatus(mobileyeData.sensor_frontal);
+      if (formInputs.leftSensor) formInputs.leftSensor.value = formatStatus(mobileyeData.sensor_izq);
+      if (formInputs.rightSensor) formInputs.rightSensor.value = formatStatus(mobileyeData.sensor_der);
+      if (formInputs.rearLeftSensor) formInputs.rearLeftSensor.value = formatStatus(mobileyeData.sensor_traser_izq_art);
+      if (formInputs.rearRightSensor) formInputs.rearRightSensor.value = formatStatus(mobileyeData.sensor_traser_der_art);
       
-      if (mobileyeData) {
-        if (formInputs.mobileyeStatus) formInputs.mobileyeStatus.value = mobileyeData.estado || '';
-        if (formInputs.leftAlert) formInputs.leftAlert.value = (mobileyeData.alerta_izq || 'BUENO').toUpperCase();
-        if (formInputs.rightAlert) formInputs.rightAlert.value = (mobileyeData.alerta_der || 'BUENO').toUpperCase();
-        if (formInputs.console) formInputs.console.value = (mobileyeData.consola || 'BUENO').toUpperCase();
-        if (formInputs.frontSensor) formInputs.frontSensor.value = (mobileyeData.sensor_frontal || 'BUENO').toUpperCase();
-        if (formInputs.leftSensor) formInputs.leftSensor.value = (mobileyeData.sensor_izq || 'BUENO').toUpperCase();
-        if (formInputs.rightSensor) formInputs.rightSensor.value = (mobileyeData.sensor_der || 'BUENO').toUpperCase();
-        if (formInputs.rearLeftSensor) formInputs.rearLeftSensor.value = (mobileyeData.sensor_traser_izq_art || 'BUENO').toUpperCase();
-        if (formInputs.rearRightSensor) formInputs.rearRightSensor.value = (mobileyeData.sensor_traser_der_art || 'BUENO').toUpperCase();
-        
-        if (mobileyeData.fecha_siniestro && formInputs.incidentDate) {
-          formInputs.incidentDate.value = mobileyeData.fecha_siniestro.substring(0, 10);
-        }
-        
-        if (formInputs.incidentNumber) formInputs.incidentNumber.value = mobileyeData.nro_siniestro || '';
+      if (mobileyeData.fecha_siniestro && formInputs.incidentDate) {
+        formInputs.incidentDate.value = mobileyeData.fecha_siniestro.substring(0, 10);
       }
+      
+      if (formInputs.incidentNumber) formInputs.incidentNumber.value = mobileyeData.nro_siniestro || '';
     }
     
-    // 5. Load odometer data
-    const { data: odometerData } = await supabase
-      .from('revision_semanal_odometro_inspeccion')
-      .select('*')
-      .eq('inspeccion_id', inspectionId)
-      .maybeSingle();
-    
+    // 5. Odometer
+    const odometerData = sections.odometer;
     if (odometerData) {
-    if (formInputs.odometerReading) formInputs.odometerReading.value = odometerData.lectura_km || '';
-    if (formInputs.odometerStatus) formInputs.odometerStatus.value = odometerData.estado_odometro || 'funcionando';
-    if (formInputs.odometerObservations) formInputs.odometerObservations.value = odometerData.observacion || '';
-  }
-  
-  // 6. Load advertising data
-  const { data: advertisingData, error: advertisingError } = await supabase
-    .from('revision_semanal_publicidad_inspeccion')
-    .select('*')
-    .eq('inspeccion_id', inspectionId)
-    .maybeSingle();
-  
-  if (advertisingError && advertisingError.code !== 'PGRST116') {
-    console.error('Error cargando sección de publicidad:', advertisingError);
-  }
-  
-  if (advertisingData) {
-    if (formInputs.publicityLeftStatus) formInputs.publicityLeftStatus.value = advertisingData.publicidad_izquierda_estado || 'NO TIENE';
-    if (formInputs.publicityLeftDetail) formInputs.publicityLeftDetail.value = advertisingData.publicidad_izquierda_detalle || '';
-    if (formInputs.publicityLeftDamage) formInputs.publicityLeftDamage.value = advertisingData.publicidad_izquierda_danio || 'NO';
-    if (formInputs.publicityLeftDamageDetail) formInputs.publicityLeftDamageDetail.value = advertisingData.publicidad_izquierda_danio_detalle || '';
-    if (formInputs.publicityLeftResidue) formInputs.publicityLeftResidue.value = advertisingData.publicidad_izquierda_residuos || 'NO';
+      if (formInputs.odometerReading) formInputs.odometerReading.value = odometerData.lectura_km || '';
+      if (formInputs.odometerStatus) formInputs.odometerStatus.value = odometerData.estado_odometro || 'funcionando';
+      if (formInputs.odometerObservations) formInputs.odometerObservations.value = odometerData.observacion || '';
+    }
     
-    if (formInputs.publicityRightStatus) formInputs.publicityRightStatus.value = advertisingData.publicidad_derecha_estado || 'NO TIENE';
-    if (formInputs.publicityRightDetail) formInputs.publicityRightDetail.value = advertisingData.publicidad_derecha_detalle || '';
-    if (formInputs.publicityRightDamage) formInputs.publicityRightDamage.value = advertisingData.publicidad_derecha_danio || 'NO';
-    if (formInputs.publicityRightDamageDetail) formInputs.publicityRightDamageDetail.value = advertisingData.publicidad_derecha_danio_detalle || '';
-    if (formInputs.publicityRightResidue) formInputs.publicityRightResidue.value = advertisingData.publicidad_derecha_residuos || 'NO';
+    // 6. Advertising
+    const advertisingData = sections.advertising;
+    if (advertisingData) {
+      if (formInputs.publicityLeftStatus) formInputs.publicityLeftStatus.value = advertisingData.publicidad_izquierda_estado || 'NO TIENE';
+      if (formInputs.publicityLeftDetail) formInputs.publicityLeftDetail.value = advertisingData.publicidad_izquierda_detalle || '';
+      if (formInputs.publicityLeftDamage) formInputs.publicityLeftDamage.value = advertisingData.publicidad_izquierda_danio || 'NO';
+      if (formInputs.publicityLeftDamageDetail) formInputs.publicityLeftDamageDetail.value = advertisingData.publicidad_izquierda_danio_detalle || '';
+      if (formInputs.publicityLeftResidue) formInputs.publicityLeftResidue.value = advertisingData.publicidad_izquierda_residuos || 'NO';
+      
+      if (formInputs.publicityRightStatus) formInputs.publicityRightStatus.value = advertisingData.publicidad_derecha_estado || 'NO TIENE';
+      if (formInputs.publicityRightDetail) formInputs.publicityRightDetail.value = advertisingData.publicidad_derecha_detalle || '';
+      if (formInputs.publicityRightDamage) formInputs.publicityRightDamage.value = advertisingData.publicidad_derecha_danio || 'NO';
+      if (formInputs.publicityRightDamageDetail) formInputs.publicityRightDamageDetail.value = advertisingData.publicidad_derecha_danio_detalle || '';
+      if (formInputs.publicityRightResidue) formInputs.publicityRightResidue.value = advertisingData.publicidad_derecha_residuos || 'NO';
+      
+      if (formInputs.publicityRearStatus) formInputs.publicityRearStatus.value = advertisingData.publicidad_luneta_estado || 'NO TIENE';
+      if (formInputs.publicityRearDetail) formInputs.publicityRearDetail.value = advertisingData.publicidad_luneta_detalle || '';
+      if (formInputs.publicityRearDamage) formInputs.publicityRearDamage.value = advertisingData.publicidad_luneta_danio || 'NO';
+      if (formInputs.publicityRearDamageDetail) formInputs.publicityRearDamageDetail.value = advertisingData.publicidad_luneta_danio_detalle || '';
+      if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = advertisingData.publicidad_luneta_residuos || 'NO';
+    }
     
-    if (formInputs.publicityRearStatus) formInputs.publicityRearStatus.value = advertisingData.publicidad_luneta_estado || 'NO TIENE';
-    if (formInputs.publicityRearDetail) formInputs.publicityRearDetail.value = advertisingData.publicidad_luneta_detalle || '';
-    if (formInputs.publicityRearDamage) formInputs.publicityRearDamage.value = advertisingData.publicidad_luneta_danio || 'NO';
-    if (formInputs.publicityRearDamageDetail) formInputs.publicityRearDamageDetail.value = advertisingData.publicidad_luneta_danio_detalle || '';
-    if (formInputs.publicityRearResidue) formInputs.publicityRearResidue.value = advertisingData.publicidad_luneta_residuos || 'NO';
-  }
-  
-  autoFillExtinguisherLocation(false);
-  
-  clearTimeout(loaderId);
-  hideLoader();
-  return true;
+    autoFillExtinguisherLocation(false);
+    
+    if (loaderId !== undefined) clearTimeout(loaderId);
+    if (withLoader) hideLoader();
+    return true;
   } catch (error) {
-    clearTimeout(loaderId);
-    hideLoader();
+    if (loaderId !== undefined) clearTimeout(loaderId);
+    if (withLoader) hideLoader();
     
     console.error('Error loading inspection sections:', error);
     showNotification('error', 'Error', 'No se pudieron cargar los datos completos de la inspección');
@@ -7091,9 +7137,19 @@ async function saveInspection() {
     
     APP_STATE.inspectionId = inspectionId;
     
+    const isVolvoBus = (APP_STATE.currentBus?.marca || '').toUpperCase() === 'VOLVO';
+    const cacheSections = {
+      camera: null,
+      tag: null,
+      extinguisher: null,
+      mobileye: null,
+      odometer: null,
+      advertising: null
+    };
+    
     // 2. Save cameras section
     try {
-      await upsertInspectionSection('revision_semanal_camara_inspeccion', {
+      const cameraPayload = {
         inspeccion_id: inspectionId,
         monitor_camara: formInputs.monitorCamera ? formInputs.monitorCamera.value === 'SI' : false,
         monitor_detalle: formInputs.monitorDetail ? formInputs.monitorDetail.value || null : null,
@@ -7106,7 +7162,10 @@ async function saveInspection() {
         q_doors_open: formInputs.doorsOpen ? formInputs.doorsOpen.value || null : null,
         q_doors_closed: formInputs.doorsClosed ? formInputs.doorsClosed.value || null : null,
         observacion: formInputs.cameraObservations ? formInputs.cameraObservations.value || null : null
-      });
+      };
+      
+      await upsertInspectionSection('revision_semanal_camara_inspeccion', cameraPayload);
+      cacheSections.camera = { ...cameraPayload };
     } catch (cameraError) {
       console.error('Error guardando sección de cámaras:', cameraError);
       throw cameraError;
@@ -7114,12 +7173,15 @@ async function saveInspection() {
     
     // 3. Save TAG section
     try {
-      await upsertInspectionSection('revision_semanal_tag_inspeccion', {
+      const tagPayload = {
         inspeccion_id: inspectionId,
         tag_tiene: formInputs.hasTag ? formInputs.hasTag.value === 'yes' : true,
         tag_serie: formInputs.tagSerial ? formInputs.tagSerial.value || null : null,
         observacion: formInputs.tagObservations ? formInputs.tagObservations.value || null : null
-      });
+      };
+      
+      await upsertInspectionSection('revision_semanal_tag_inspeccion', tagPayload);
+      cacheSections.tag = { ...tagPayload };
     } catch (tagError) {
       console.error('Error guardando sección de TAG:', tagError);
       throw tagError;
@@ -7127,7 +7189,7 @@ async function saveInspection() {
     
     // 4. Save extinguisher section
     try {
-      await upsertInspectionSection('revision_semanal_extintor_inspeccion', {
+      const extinguisherPayload = {
         inspeccion_id: inspectionId,
         ubicacion: formInputs.extinguisherLocation ? formInputs.extinguisherLocation.value.trim() || null : null,
         fecha_vencimiento: formInputs.extinguisherExpiry && formInputs.extinguisherExpiry.value ?
@@ -7139,16 +7201,19 @@ async function saveInspection() {
         presion_carga: formInputs.pressureStatus ? formInputs.pressureStatus.value || null : null,
         cilindro_estado: formInputs.cylinderStatus ? formInputs.cylinderStatus.value || null : null,
         estado_porta_extintor: formInputs.holderStatus ? formInputs.holderStatus.value || null : null
-      });
+      };
+      
+      await upsertInspectionSection('revision_semanal_extintor_inspeccion', extinguisherPayload);
+      cacheSections.extinguisher = { ...extinguisherPayload };
     } catch (extinguisherError) {
       console.error('Error guardando sección de extintor:', extinguisherError);
       throw extinguisherError;
     }
     
     // 5. Save Mobileye section (if applicable)
-    if (APP_STATE.currentBus && (APP_STATE.currentBus.marca || '').toUpperCase() === 'VOLVO') {
+    if (isVolvoBus) {
       try {
-        await upsertInspectionSection('revision_semanal_movileye_inspeccion', {
+        const mobileyePayload = {
           inspeccion_id: inspectionId,
           estado: formInputs.mobileyeStatus ? formInputs.mobileyeStatus.value || null : null,
           alerta_izq: formInputs.leftAlert ? formInputs.leftAlert.value || null : null,
@@ -7162,7 +7227,10 @@ async function saveInspection() {
           fecha_siniestro: formInputs.incidentDate && formInputs.incidentDate.value ? 
             new Date(formInputs.incidentDate.value).toISOString() : null,
           nro_siniestro: formInputs.incidentNumber ? formInputs.incidentNumber.value || null : null
-        });
+        };
+        
+        await upsertInspectionSection('revision_semanal_movileye_inspeccion', mobileyePayload);
+        cacheSections.mobileye = { ...mobileyePayload };
       } catch (mobileyeError) {
         console.error('Error guardando sección de Mobileye:', mobileyeError);
         throw mobileyeError;
@@ -7171,13 +7239,16 @@ async function saveInspection() {
     
     // 6. Save odometer section
     try {
-      await upsertInspectionSection('revision_semanal_odometro_inspeccion', {
+      const odometerPayload = {
         inspeccion_id: inspectionId,
         lectura_km: formInputs.odometerReading && formInputs.odometerReading.value ? 
           Number(formInputs.odometerReading.value) : null,
         estado_odometro: formInputs.odometerStatus ? formInputs.odometerStatus.value : 'funcionando',
         observacion: formInputs.odometerObservations ? formInputs.odometerObservations.value || null : null
-      });
+      };
+      
+      await upsertInspectionSection('revision_semanal_odometro_inspeccion', odometerPayload);
+      cacheSections.odometer = { ...odometerPayload };
     } catch (odometerError) {
       console.error('Error guardando sección de odómetro:', odometerError);
       throw odometerError;
@@ -7185,7 +7256,7 @@ async function saveInspection() {
     
     // 7. Save advertising section
     try {
-      await upsertInspectionSection('revision_semanal_publicidad_inspeccion', {
+      const advertisingPayload = {
         inspeccion_id: inspectionId,
         publicidad_izquierda_estado: formInputs.publicityLeftStatus ? formInputs.publicityLeftStatus.value || 'NO TIENE' : 'NO TIENE',
         publicidad_izquierda_detalle: formInputs.publicityLeftDetail ? formInputs.publicityLeftDetail.value || null : null,
@@ -7202,11 +7273,16 @@ async function saveInspection() {
         publicidad_luneta_danio: formInputs.publicityRearDamage ? formInputs.publicityRearDamage.value || 'NO' : 'NO',
         publicidad_luneta_danio_detalle: formInputs.publicityRearDamageDetail ? formInputs.publicityRearDamageDetail.value || null : null,
         publicidad_luneta_residuos: formInputs.publicityRearResidue ? formInputs.publicityRearResidue.value || 'NO' : 'NO'
-      });
+      };
+      
+      await upsertInspectionSection('revision_semanal_publicidad_inspeccion', advertisingPayload);
+      cacheSections.advertising = { ...advertisingPayload };
     } catch (advertisingError) {
       console.error('Error guardando sección de publicidad:', advertisingError);
       throw advertisingError;
     }
+    
+    APP_STATE.inspectionSectionCache.set(inspectionId, cacheSections);
     
     // 8. Generate maintenance tickets
     const createdTickets = await createMaintenanceTickets(inspectionId) || [];
@@ -11703,8 +11779,6 @@ window.editTicket = openTicketDetails;
 window.showNotification = showNotification;
 window.showSection = showSection;
       
-        
-        
         
 </script>
 </body>
