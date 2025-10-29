@@ -3512,8 +3512,8 @@ textarea.form-control {
                 <label class="form-label">Estado Monitor</label>
                 <select class="form-control" id="camerasMonitorFilter">
                   <option value="">Todos</option>
-                  <option value="SI">Funcional</option>
-                  <option value="NO">Con Problemas</option>
+                  <option value="SI">Con daños</option>
+                  <option value="NO">Sin daños</option>
                 </select>
               </div>
               
@@ -6919,8 +6919,8 @@ function evaluateCriticality() {
   // Check camera issues
   const cameraIssues = [];
   
-  if (formInputs.monitorCamera && formInputs.monitorCamera.value === 'NO') {
-    cameraIssues.push('El monitor no muestra todas las cámaras');
+  if (formInputs.monitorCamera && formInputs.monitorCamera.value === 'SI') {
+    cameraIssues.push('El monitor presenta daños físicos');
   }
   
   if (formInputs.allVisible && formInputs.allVisible.value === 'NO') {
@@ -7356,8 +7356,8 @@ async function createMaintenanceTickets(inspectionId) {
   // 1. Check for camera issues
   const cameraIssues = [];
   
-  if (formInputs.monitorCamera && formInputs.monitorCamera.value === 'NO') {
-    cameraIssues.push('Monitor no muestra todas las cámaras');
+  if (formInputs.monitorCamera && formInputs.monitorCamera.value === 'SI') {
+    cameraIssues.push('Monitor presenta daños físicos');
   }
   
   if (formInputs.allVisible && formInputs.allVisible.value === 'NO') {
@@ -7836,7 +7836,8 @@ async function refreshCamerasReport(filters = {}) {
       if (filteredCameraRows.length > 0) {
         cameraTableBody.innerHTML = filteredCameraRows.map((row, index) => {
           const bus = row.inspeccion?.bus || {};
-          const monitorStatus = row.monitor_camara ? 'SÍ' : 'NO';
+          const monitorStatus = row.monitor_camara ? 'SÍ (Daño)' : 'NO (Sin daño)';
+          const monitorStatusClass = row.monitor_camara ? 'text-danger fw-bold' : '';
           
           return `<tr>
             <td>${index + 1}</td>
@@ -7846,7 +7847,7 @@ async function refreshCamerasReport(filters = {}) {
             <td>${escapeHTML(bus.modelo_chasis || '')}</td>
             <td>${escapeHTML(bus.marca || '')}</td>
             <td>${escapeHTML(bus.anio || '')}</td>
-            <td class="${monitorStatus === 'NO' ? 'text-danger fw-bold' : ''}">${monitorStatus}</td>
+            <td class="${monitorStatusClass}">${monitorStatus}</td>
             <td>${escapeHTML(row.camara_frontal || '')}</td>
             <td>${escapeHTML(row.camara_cabina || '')}</td>
             <td>${escapeHTML(row.camaras_interior || '')}</td>
